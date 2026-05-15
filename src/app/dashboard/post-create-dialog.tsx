@@ -83,10 +83,10 @@ export function PostCreateDialog() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="karma_value">Karma value</Label>
+            <Label htmlFor="credit_value">Credit value</Label>
             <Input
-              id="karma_value"
-              name="karma_value"
+              id="credit_value"
+              name="credit_value"
               type="number"
               min={1}
               max={50}

@@ -66,7 +66,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     type: post.type,
     title: post.title,
     description: post.description,
-    karmaValue: post.karma_value ?? 1,
+    creditValue: post.karma_value ?? 1,
     createdAt: post.created_at,
   }));
 

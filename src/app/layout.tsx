@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Community Swap",
-  description: "A hyper-local barter and skill exchange powered by Karma.",
+  description: "A hyper-local barter and skill exchange powered by Credits.",
 };
 
 export default function RootLayout({

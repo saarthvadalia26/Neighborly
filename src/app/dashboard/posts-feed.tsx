@@ -20,7 +20,7 @@ export type FeedPost = {
   type: "offer" | "need";
   title: string;
   description: string;
-  karmaValue: number;
+  creditValue: number;
   createdAt: string | null;
 };
 
@@ -86,10 +86,10 @@ export function PostsFeed({ posts }: PostsFeedProps) {
                 Posted {formatPostDate(post.createdAt)}
               </CardContent>
               <CardFooter className="justify-between">
-                <span className="text-sm text-muted-foreground">Karma value</span>
+                <span className="text-sm text-muted-foreground">Credit value</span>
                 <Badge variant="secondary" className="gap-1">
                   <Coins className="size-3" />
-                  {post.karmaValue}
+                  {post.creditValue}
                 </Badge>
               </CardFooter>
             </Card>

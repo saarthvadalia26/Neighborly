@@ -1,153 +1,89 @@
-# Community Swap 🔄
+# Community Swap
 
-> Hyper-local barter powered by Karma
+> Hyper-local barter powered by Credits
 
-**Community Swap** is a neighborhood trading platform that lets residents exchange useful items, errands, lessons, repairs, and neighborly help — no money involved. Instead of cash, every trade is backed by a **Karma balance** that keeps the ecosystem fair and reciprocal.
+**Community Swap** is a neighborhood trading platform for exchanging useful
+items, errands, lessons, repairs, and neighborly help without cash. Trades are
+priced in **Credits**, a simple balance that keeps swaps fair and reciprocal.
 
-Built with **Next.js 16**, **Supabase**, and **Tailwind CSS v4**.
+Built with **Next.js**, **Supabase**, **TypeScript**, **Tailwind CSS**, and
+**shadcn/ui**.
 
----
+## Features
 
-## ✨ Features
+- Email/password authentication with Supabase Auth
+- Credit-based exchange model: new users start with 5 Credits
+- Neighborhood feed for open offers and needs
+- Post creation dialog for authenticated users
+- Auto-generated profiles from signup metadata
+- Supabase SSR helpers for browser, server, and proxy session refresh
 
-- 🔐 **Email authentication** — sign up / log in via Supabase Auth
-- 🪙 **Karma economy** — every new user starts with 5 karma points; trades consume and earn karma
-- 📋 **Neighborhood feed** — real-time stream of open offers & requests
-- ✍️ **Post creation** — list an item, skill, errand, or help you need or can provide
-- 🧑 **Auto-generated profiles** — a unique `@username` is created from your email on sign-up
-- 🌙 **Dark mode ready** — system-preference aware theming via CSS variables
+## Getting Started
 
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | [Next.js 16](https://nextjs.org) (App Router) |
-| Language | TypeScript |
-| Database & Auth | [Supabase](https://supabase.com) |
-| Styling | Tailwind CSS v4 |
-| UI Components | [shadcn/ui](https://ui.shadcn.com) + Radix UI |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- A [Supabase](https://supabase.com) project (free tier works fine)
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/YOUR_USERNAME/community-swap.git
-cd community-swap
-```
-
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Set up environment variables
+### 2. Configure environment variables
 
-Copy the example env file and fill in your Supabase credentials:
+Create `.env.local` from the example file:
 
 ```bash
 cp .env.local.example .env.local
 ```
+
+Then add your Supabase project values:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-You can find these in your Supabase project → **Settings → API**.
+You can find these in Supabase under **Project Settings > API**.
 
-### 4. Set up the database
+### 3. Set up Supabase
 
-In the Supabase dashboard, open the **SQL Editor** and run the contents of:
+Run your core schema in the Supabase SQL Editor, then run:
 
-```
+```text
 supabase/profile-trigger.sql
 ```
 
-This creates the `profiles` table trigger that auto-creates a profile with 5 karma points whenever a new user registers.
+That trigger creates a profile with 5 starting Credits when a new user signs up.
+The database column names still use `karma_balance` and `karma_value` internally
+for compatibility with the original schema, while the product UI calls them
+Credits.
 
-You also need to create the `posts` table manually (or via the Table Editor):
-
-```sql
-create table public.posts (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid references auth.users(id) on delete cascade not null,
-  type        text not null,          -- 'offer' | 'request'
-  title       text not null,
-  description text,
-  karma_value integer default 1,
-  status      text default 'open',   -- 'open' | 'closed'
-  created_at  timestamptz default now()
-);
-
-alter table public.posts enable row level security;
-
--- Allow anyone logged in to read open posts
-create policy "Read open posts" on public.posts
-  for select using (status = 'open');
-
--- Allow users to create their own posts
-create policy "Create own posts" on public.posts
-  for insert with check (auth.uid() = user_id);
-```
-
-### 5. Run the development server
+### 4. Start the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
----
+## Project Structure
 
-## 📁 Project Structure
-
-```
+```text
 src/
-├── app/
-│   ├── (auth)/           # Login & signup pages + server actions
-│   ├── dashboard/        # Neighborhood feed, post creation
-│   ├── globals.css       # Design tokens & global styles
-│   └── layout.tsx        # Root layout
-├── components/
-│   └── ui/               # shadcn/ui primitives
-└── lib/
-    └── supabase/         # Supabase client helpers (browser + server)
+  app/
+    (auth)/        Login and signup pages plus auth actions
+    dashboard/     Feed, filtering, and post creation
+    globals.css    Theme tokens and global styles
+    layout.tsx     Root layout
+  components/ui/   shadcn/ui primitives
+  lib/
+    supabase/      Supabase browser, server, and proxy helpers
 
 supabase/
-└── profile-trigger.sql   # Auto-create profile on sign-up
+  profile-trigger.sql
 ```
 
----
+## Deploy
 
-## 🚢 Deploy on Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-
-1. Push this repo to GitHub.
-2. Import it on [vercel.com/new](https://vercel.com/new).
-3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as environment variables in the Vercel project settings.
-4. Deploy — that's it!
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
-
----
-
-## 📄 License
-
-[MIT](LICENSE)
+1. Push this project to GitHub.
+2. Import it into Vercel.
+3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+4. Deploy.

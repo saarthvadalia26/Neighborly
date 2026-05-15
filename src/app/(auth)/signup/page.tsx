@@ -29,7 +29,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         <CardHeader>
           <CardTitle>Create account</CardTitle>
           <CardDescription>
-            Start with 5 Karma points and a neighborhood profile.
+            Start with 5 Credits and a neighborhood profile.
           </CardDescription>
         </CardHeader>
         <CardContent>

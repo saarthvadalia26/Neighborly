@@ -21,7 +21,7 @@ export async function createPost(formData: FormData) {
   const type = readString(formData, "type");
   const title = readString(formData, "title");
   const description = readString(formData, "description");
-  const karmaValue = Number.parseInt(readString(formData, "karma_value"), 10);
+  const creditValue = Number.parseInt(readString(formData, "credit_value"), 10);
 
   if (type !== "offer" && type !== "need") {
     redirectWithPostError("Choose whether this post is an offer or a need.");
@@ -35,8 +35,8 @@ export async function createPost(formData: FormData) {
     redirectWithPostError("Description must be between 10 and 1000 characters.");
   }
 
-  if (!Number.isInteger(karmaValue) || karmaValue < 1 || karmaValue > 50) {
-    redirectWithPostError("Karma value must be a whole number from 1 to 50.");
+  if (!Number.isInteger(creditValue) || creditValue < 1 || creditValue > 50) {
+    redirectWithPostError("Credit value must be a whole number from 1 to 50.");
   }
 
   const supabase = await createClient();
@@ -53,7 +53,7 @@ export async function createPost(formData: FormData) {
     type,
     title,
     description,
-    karma_value: karmaValue,
+    karma_value: creditValue,
   });
 
   if (error) {

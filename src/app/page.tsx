@@ -8,7 +8,7 @@ export default function Home() {
       <section className="mx-auto grid w-full max-w-3xl gap-8 text-center">
         <div className="grid gap-4">
           <p className="text-sm font-medium text-muted-foreground">
-            Hyper-local barter powered by Karma
+            Hyper-local barter powered by Credits
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Community Swap
