@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Coins, LogOut, Plus } from "lucide-react";
+import { Coins, LogOut } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -104,12 +103,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <PostCreateDialog />
-            <Button asChild variant="outline" className="gap-2">
-              <Link href="/create-post">
-                <Plus className="size-4" />
-                Create page
-              </Link>
-            </Button>
             <form action={logout}>
               <Button type="submit" variant="outline" className="w-full gap-2 sm:w-auto">
                 <LogOut className="size-4" />
