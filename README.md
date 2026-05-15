@@ -51,10 +51,21 @@ Run your core schema in the Supabase SQL Editor, then run:
 supabase/profile-trigger.sql
 ```
 
-That trigger creates a profile with 5 starting Credits when a new user signs up.
-The database column names still use `karma_balance` and `karma_value` internally
-for compatibility with the original schema, while the product UI calls them
-Credits.
+For existing Phase 1 databases, run:
+
+```text
+supabase/phase-2-credit-schema.sql
+```
+
+Then run:
+
+```text
+supabase/profile-trigger.sql
+```
+
+The Phase 2 SQL migrates older `karma_balance` and `karma_value` columns to
+`credit_balance` and `credit_value`, adds the 1-5 Credit constraint for posts,
+and installs the RLS policies needed by the app.
 
 ### 4. Start the app
 

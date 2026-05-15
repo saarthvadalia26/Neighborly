@@ -35,8 +35,8 @@ export async function createPost(formData: FormData) {
     redirectWithPostError("Description must be between 10 and 1000 characters.");
   }
 
-  if (!Number.isInteger(creditValue) || creditValue < 1 || creditValue > 50) {
-    redirectWithPostError("Credit value must be a whole number from 1 to 50.");
+  if (!Number.isInteger(creditValue) || creditValue < 1 || creditValue > 5) {
+    redirectWithPostError("Credit value must be a whole number from 1 to 5.");
   }
 
   const supabase = await createClient();
@@ -53,7 +53,7 @@ export async function createPost(formData: FormData) {
     type,
     title,
     description,
-    karma_value: creditValue,
+    credit_value: creditValue,
   });
 
   if (error) {

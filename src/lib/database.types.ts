@@ -14,7 +14,7 @@ export type Database = {
           id: string;
           username: string;
           avatar_url: string | null;
-          karma_balance: number | null;
+          credit_balance: number | null;
           community_id: string | null;
           created_at: string | null;
         };
@@ -22,7 +22,7 @@ export type Database = {
           id: string;
           username: string;
           avatar_url?: string | null;
-          karma_balance?: number | null;
+          credit_balance?: number | null;
           community_id?: string | null;
           created_at?: string | null;
         };
@@ -30,7 +30,7 @@ export type Database = {
           id?: string;
           username?: string;
           avatar_url?: string | null;
-          karma_balance?: number | null;
+          credit_balance?: number | null;
           community_id?: string | null;
           created_at?: string | null;
         };
@@ -43,7 +43,7 @@ export type Database = {
           type: "offer" | "need";
           title: string;
           description: string;
-          karma_value: number | null;
+          credit_value: number | null;
           status: "open" | "in_progress" | "completed" | "canceled" | null;
           created_at: string | null;
         };
@@ -53,7 +53,7 @@ export type Database = {
           type: "offer" | "need";
           title: string;
           description: string;
-          karma_value?: number | null;
+          credit_value?: number | null;
           status?: "open" | "in_progress" | "completed" | "canceled" | null;
           created_at?: string | null;
         };
@@ -63,7 +63,7 @@ export type Database = {
           type?: "offer" | "need";
           title?: string;
           description?: string;
-          karma_value?: number | null;
+          credit_value?: number | null;
           status?: "open" | "in_progress" | "completed" | "canceled" | null;
           created_at?: string | null;
         };

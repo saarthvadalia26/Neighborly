@@ -31,7 +31,21 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (isProtectedPath(request.nextUrl.pathname) && !user) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/login";
+    redirectUrl.searchParams.set("redirectedFrom", request.nextUrl.pathname);
+
+    return NextResponse.redirect(redirectUrl);
+  }
 
   return response;
+}
+
+function isProtectedPath(pathname: string) {
+  return pathname.startsWith("/dashboard") || pathname.startsWith("/create-post");
 }

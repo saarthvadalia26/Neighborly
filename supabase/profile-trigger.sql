@@ -37,7 +37,7 @@ begin
     id,
     username,
     avatar_url,
-    karma_balance
+    credit_balance
   )
   values (
     new.id,
@@ -50,9 +50,7 @@ begin
 end;
 $$;
 
-drop trigger if exists on_auth_user_created on auth.users;
-
-create trigger on_auth_user_created
+create or replace trigger on_auth_user_created
 after insert on auth.users
 for each row
 execute procedure public.handle_new_user();
