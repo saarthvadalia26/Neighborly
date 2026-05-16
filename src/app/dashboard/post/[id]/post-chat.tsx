@@ -1,7 +1,14 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Send } from "lucide-react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { MessageCircle, Send, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -42,7 +49,13 @@ type MessageInsertPayload = {
   created_at: string | null;
 };
 
+type MessageNotification = Pick<
+  ChatMessage,
+  "id" | "senderId" | "senderUsername" | "content"
+>;
+
 const MESSAGE_REFRESH_INTERVAL_MS = 3000;
+const MESSAGE_NOTIFICATION_VISIBLE_MS = 5500;
 
 export function PostChat({
   postId,
@@ -54,6 +67,9 @@ export function PostChat({
   participants,
 }: PostChatProps) {
   const supabase = useMemo(() => createClient(), []);
+  const knownMessageIdsRef = useRef(
+    new Set(initialMessages.map((message) => message.id)),
+  );
   const [messages, setMessages] = useState(initialMessages);
   const [chatParticipants, setChatParticipants] = useState(participants);
   const [selectedParticipantId, setSelectedParticipantId] = useState(
@@ -62,6 +78,8 @@ export function PostChat({
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messageNotification, setMessageNotification] =
+    useState<MessageNotification | null>(null);
   const activeReceiverId = isAuthor ? selectedParticipantId : authorId;
   const activeReceiverUsername =
     chatParticipants.find((participant) => participant.id === activeReceiverId)
@@ -114,20 +132,41 @@ export function PostChat({
       }
     }
 
-    setMessages(
-      refreshedMessages.map((message) => ({
-        id: message.id,
-        postId: message.post_id,
-        senderId: message.sender_id,
-        receiverId: message.receiver_id,
-        content: message.content,
-        createdAt: message.created_at,
-        senderUsername:
-          message.sender_id === currentUserId
-            ? "You"
-            : usernameById.get(message.sender_id) ?? "Neighbor",
-      })),
+    const nextMessages = refreshedMessages.map((message) => ({
+      id: message.id,
+      postId: message.post_id,
+      senderId: message.sender_id,
+      receiverId: message.receiver_id,
+      content: message.content,
+      createdAt: message.created_at,
+      senderUsername:
+        message.sender_id === currentUserId
+          ? "You"
+          : usernameById.get(message.sender_id) ?? "Neighbor",
+    }));
+    const newIncomingMessages = nextMessages.filter(
+      (message) =>
+        message.senderId !== currentUserId &&
+        !knownMessageIdsRef.current.has(message.id),
     );
+
+    for (const message of nextMessages) {
+      knownMessageIdsRef.current.add(message.id);
+    }
+
+    setMessages(nextMessages);
+
+    const latestIncomingMessage =
+      newIncomingMessages[newIncomingMessages.length - 1];
+
+    if (latestIncomingMessage) {
+      setMessageNotification({
+        id: latestIncomingMessage.id,
+        senderId: latestIncomingMessage.senderId,
+        senderUsername: latestIncomingMessage.senderUsername,
+        content: latestIncomingMessage.content,
+      });
+    }
 
     if (isAuthor) {
       const nextParticipants = Array.from(
@@ -194,6 +233,20 @@ export function PostChat({
     };
   }, [refreshMessages]);
 
+  useEffect(() => {
+    if (!messageNotification) {
+      return;
+    }
+
+    const dismissTimer = window.setTimeout(() => {
+      setMessageNotification(null);
+    }, MESSAGE_NOTIFICATION_VISIBLE_MS);
+
+    return () => {
+      window.clearTimeout(dismissTimer);
+    };
+  }, [messageNotification]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -225,6 +278,8 @@ export function PostChat({
     }
 
     if (data) {
+      knownMessageIdsRef.current.add(data.id);
+
       setMessages((currentMessages) => {
         if (currentMessages.some((message) => message.id === data.id)) {
           return currentMessages;
@@ -247,6 +302,48 @@ export function PostChat({
 
   return (
     <section className="grid gap-4">
+      {messageNotification ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed right-4 top-4 z-50 w-[min(calc(100vw-2rem),22rem)] rounded-lg border bg-background p-3 shadow-lg ring-1 ring-border"
+        >
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              className="grid min-w-0 flex-1 gap-1 text-left"
+              onClick={() => {
+                if (isAuthor) {
+                  setSelectedParticipantId(messageNotification.senderId);
+                }
+
+                setMessageNotification(null);
+              }}
+            >
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <MessageCircle className="size-4" />
+                New message
+              </div>
+              <div className="truncate text-sm font-medium">
+                {messageNotification.senderUsername}
+              </div>
+              <p className="line-clamp-2 text-sm text-muted-foreground">
+                {messageNotification.content}
+              </p>
+            </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Dismiss message notification"
+              onClick={() => setMessageNotification(null)}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div>
         <h2 className="text-lg font-semibold tracking-tight">Messages</h2>
         <p className="text-sm text-muted-foreground">
@@ -323,7 +420,11 @@ export function PostChat({
             placeholder={`Message ${activeReceiverUsername}`}
             maxLength={1000}
           />
-          <Button type="submit" disabled={isSending || !content.trim()} className="gap-2">
+          <Button
+            type="submit"
+            disabled={isSending || !content.trim()}
+            className="gap-2"
+          >
             <Send className="size-4" />
             Send
           </Button>
