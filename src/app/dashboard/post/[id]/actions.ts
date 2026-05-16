@@ -32,10 +32,18 @@ export async function transferCredits(formData: FormData) {
   const postId = readString(formData, "post_id");
   const receiverId = readString(formData, "receiver_id");
   const amount = Number.parseInt(readString(formData, "amount"), 10);
+  const taskCompletedConfirmed =
+    readString(formData, "task_completed_confirmed") === "yes";
 
   if (!postId || !receiverId || !Number.isInteger(amount) || amount < 1) {
     redirectWithTransferMessage(postId || "", {
       transfer_error: "Transfer details are incomplete.",
+    });
+  }
+
+  if (!taskCompletedConfirmed) {
+    redirectWithTransferMessage(postId, {
+      transfer_error: "Confirm the task is completed before paying Credits.",
     });
   }
 
@@ -63,6 +71,6 @@ export async function transferCredits(formData: FormData) {
   revalidatePath(`/dashboard/post/${postId}`);
 
   redirectWithTransferMessage(postId, {
-    transferred: `${amount} Credits transferred successfully.`,
+    transferred: `Task completed. ${amount} Credits transferred successfully.`,
   });
 }

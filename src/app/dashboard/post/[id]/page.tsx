@@ -16,7 +16,7 @@ import {
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
-import { transferCredits } from "./actions";
+import { CompletionPaymentForm } from "./completion-payment-form";
 import { PostChat, type ChatMessage, type ChatParticipant } from "./post-chat";
 
 export const dynamic = "force-dynamic";
@@ -181,20 +181,17 @@ export default async function PostDetailPage({
           </p>
         </CardContent>
         {!isAuthor ? (
-          <CardFooter className="justify-between gap-3">
+          <CardFooter className="grid gap-3">
             {post.status === "open" ? (
-              <form action={transferCredits}>
-                <input type="hidden" name="post_id" value={post.id} />
-                <input type="hidden" name="receiver_id" value={post.author_id} />
-                <input type="hidden" name="amount" value={creditValue} />
-                <Button type="submit" className="gap-2">
-                  <Coins className="size-4" />
-                  Transfer {creditValue} Credits to {authorUsername}
-                </Button>
-              </form>
+              <CompletionPaymentForm
+                postId={post.id}
+                receiverId={post.author_id}
+                receiverUsername={authorUsername}
+                amount={creditValue}
+              />
             ) : (
               <p className="text-sm text-muted-foreground">
-                This swap has already been completed.
+                Credits can only be paid while this swap is available.
               </p>
             )}
           </CardFooter>
