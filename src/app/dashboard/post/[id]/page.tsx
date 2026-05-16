@@ -146,7 +146,7 @@ export default async function PostDetailPage({
                 <Badge variant={post.type === "offer" ? "default" : "outline"}>
                   {post.type === "offer" ? "Offer" : "Need"}
                 </Badge>
-                <Badge variant="secondary">{post.status ?? "open"}</Badge>
+                <Badge variant="secondary">{formatStatus(post.status)}</Badge>
               </div>
               <CardTitle className="text-2xl">{post.title}</CardTitle>
               <CardDescription>
@@ -230,4 +230,20 @@ function formatPostDate(value: string | null) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function formatStatus(value: string | null) {
+  switch (value) {
+    case "open":
+    case null:
+      return "Available";
+    case "in_progress":
+      return "In progress";
+    case "completed":
+      return "Completed";
+    case "canceled":
+      return "Canceled";
+    default:
+      return "Available";
+  }
 }
