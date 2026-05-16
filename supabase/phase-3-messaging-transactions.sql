@@ -76,6 +76,7 @@ as $$
 declare
   sender_balance integer;
   post_author uuid;
+  post_type text;
   post_status text;
   post_credit_value integer;
 begin
@@ -91,8 +92,8 @@ begin
     raise exception 'Transfer amount must be positive.';
   end if;
 
-  select author_id, status, credit_value
-  into post_author, post_status, post_credit_value
+  select author_id, type, status, credit_value
+  into post_author, post_type, post_status, post_credit_value
   from public.posts
   where id = related_post_id
   for update;
@@ -154,9 +155,11 @@ begin
     'completed'
   );
 
-  update public.posts
-  set status = 'completed'
-  where id = related_post_id;
+  if post_type = 'need' then
+    update public.posts
+    set status = 'completed'
+    where id = related_post_id;
+  end if;
 end;
 $$;
 

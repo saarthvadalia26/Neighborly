@@ -56,6 +56,12 @@ export async function transferCredits(formData: FormData) {
     redirect("/login");
   }
 
+  const { data: post } = await supabase
+    .from("posts")
+    .select("type")
+    .eq("id", postId)
+    .maybeSingle();
+
   const { error } = await supabase.rpc("transfer_credits", {
     sender_uuid: user.id,
     receiver_uuid: receiverId,
@@ -71,6 +77,9 @@ export async function transferCredits(formData: FormData) {
   revalidatePath(`/dashboard/post/${postId}`);
 
   redirectWithTransferMessage(postId, {
-    transferred: `Task completed. ${amount} Credits transferred successfully.`,
+    transferred:
+      post?.type === "offer"
+        ? `${amount} Credits paid. This offer stays available for other neighbors.`
+        : `Task completed. ${amount} Credits transferred successfully.`,
   });
 }
