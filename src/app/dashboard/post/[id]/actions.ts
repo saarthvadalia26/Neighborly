@@ -56,11 +56,35 @@ export async function transferCredits(formData: FormData) {
     redirect("/login");
   }
 
-  const { data: post } = await supabase
+  const { data: post, error: postError } = await supabase
     .from("posts")
-    .select("type")
+    .select("author_id, type")
     .eq("id", postId)
     .maybeSingle();
+
+  if (postError || !post) {
+    redirectWithTransferMessage(postId, {
+      transfer_error: postError?.message ?? "Post not found.",
+    });
+  }
+
+  if (post.type === "offer" && receiverId !== post.author_id) {
+    redirectWithTransferMessage(postId, {
+      transfer_error: "Offer payments must go to the post author.",
+    });
+  }
+
+  if (post.type === "need" && user.id !== post.author_id) {
+    redirectWithTransferMessage(postId, {
+      transfer_error: "Only the person who posted this need can pay Credits.",
+    });
+  }
+
+  if (post.type === "need" && receiverId === post.author_id) {
+    redirectWithTransferMessage(postId, {
+      transfer_error: "Choose the neighbor who completed your need.",
+    });
+  }
 
   const { error } = await supabase.rpc("transfer_credits", {
     sender_uuid: user.id,
@@ -80,6 +104,6 @@ export async function transferCredits(formData: FormData) {
     transferred:
       post?.type === "offer"
         ? `${amount} Credits paid. This offer stays available for other neighbors.`
-        : `Task completed. ${amount} Credits transferred successfully.`,
+        : `Need completed. ${amount} Credits paid to the neighbor who helped.`,
   });
 }

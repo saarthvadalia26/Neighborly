@@ -79,6 +79,7 @@ declare
   post_type text;
   post_status text;
   post_credit_value integer;
+  has_conversation boolean;
 begin
   if auth.uid() is null or auth.uid() <> sender_uuid then
     raise exception 'Unauthorized transfer.';
@@ -102,8 +103,33 @@ begin
     raise exception 'Post not found.';
   end if;
 
-  if post_author <> receiver_uuid then
-    raise exception 'Credits can only be transferred to the post author.';
+  if post_type = 'offer' then
+    if post_author <> receiver_uuid then
+      raise exception 'Offer payments must go to the post author.';
+    end if;
+  elsif post_type = 'need' then
+    if sender_uuid <> post_author then
+      raise exception 'Only the person who posted this need can pay Credits.';
+    end if;
+
+    if receiver_uuid = post_author then
+      raise exception 'Choose the neighbor who completed your need.';
+    end if;
+
+    select exists (
+      select 1
+      from public.messages
+      where messages.post_id = related_post_id
+        and (messages.sender_id = receiver_uuid or messages.receiver_id = receiver_uuid)
+        and (messages.sender_id = post_author or messages.receiver_id = post_author)
+    )
+    into has_conversation;
+
+    if not has_conversation then
+      raise exception 'You can only pay a neighbor who messaged about this need.';
+    end if;
+  else
+    raise exception 'Unsupported post type.';
   end if;
 
   if post_status <> 'open' then

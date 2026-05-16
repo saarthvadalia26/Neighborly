@@ -137,6 +137,8 @@ export default async function PostDetailPage({
         : usernameById.get(message.sender_id) ?? "Neighbor",
   }));
   const creditValue = post.credit_value ?? 1;
+  const shouldShowPaymentForm =
+    (post.type === "offer" && !isAuthor) || (post.type === "need" && isAuthor);
 
   return (
     <PostDetailShell>
@@ -180,15 +182,25 @@ export default async function PostDetailPage({
             {post.description}
           </p>
         </CardContent>
-        {!isAuthor ? (
+        {shouldShowPaymentForm ? (
           <CardFooter className="grid gap-3">
             {post.status === "open" ? (
-              <CompletionPaymentForm
-                postId={post.id}
-                receiverId={post.author_id}
-                receiverUsername={authorUsername}
-                amount={creditValue}
-              />
+              post.type === "offer" ? (
+                <CompletionPaymentForm
+                  postId={post.id}
+                  postType="offer"
+                  receiverId={post.author_id}
+                  receiverUsername={authorUsername}
+                  amount={creditValue}
+                />
+              ) : (
+                <CompletionPaymentForm
+                  postId={post.id}
+                  postType="need"
+                  recipients={chatParticipants}
+                  amount={creditValue}
+                />
+              )
             ) : (
               <p className="text-sm text-muted-foreground">
                 Credits can only be paid while this swap is available.
