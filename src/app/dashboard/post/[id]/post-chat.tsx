@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Send } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -42,6 +42,8 @@ type MessageInsertPayload = {
   created_at: string | null;
 };
 
+const MESSAGE_REFRESH_INTERVAL_MS = 3000;
+
 export function PostChat({
   postId,
   authorId,
@@ -76,6 +78,84 @@ export function PostChat({
   });
   const canSendMessage = Boolean(activeReceiverId);
 
+  const refreshMessages = useCallback(async () => {
+    const { data: refreshedMessages, error: refreshError } = await supabase
+      .from("messages")
+      .select("id, post_id, sender_id, receiver_id, content, created_at")
+      .eq("post_id", postId)
+      .order("created_at", { ascending: true });
+
+    if (refreshError || !refreshedMessages) {
+      return;
+    }
+
+    const profileIds = Array.from(
+      new Set(
+        refreshedMessages
+          .flatMap((message) => [message.sender_id, message.receiver_id])
+          .concat([authorId, currentUserId]),
+      ),
+    );
+    const usernameById = new Map<string, string>([
+      [authorId, authorUsername],
+      [currentUserId, "You"],
+    ]);
+
+    if (profileIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", profileIds);
+
+      for (const profile of profiles ?? []) {
+        if (profile.username) {
+          usernameById.set(profile.id, profile.username);
+        }
+      }
+    }
+
+    setMessages(
+      refreshedMessages.map((message) => ({
+        id: message.id,
+        postId: message.post_id,
+        senderId: message.sender_id,
+        receiverId: message.receiver_id,
+        content: message.content,
+        createdAt: message.created_at,
+        senderUsername:
+          message.sender_id === currentUserId
+            ? "You"
+            : usernameById.get(message.sender_id) ?? "Neighbor",
+      })),
+    );
+
+    if (isAuthor) {
+      const nextParticipants = Array.from(
+        new Set(
+          refreshedMessages
+            .flatMap((message) => [message.sender_id, message.receiver_id])
+            .filter((profileId) => profileId !== authorId),
+        ),
+      ).map((profileId) => ({
+        id: profileId,
+        username: usernameById.get(profileId) ?? "Neighbor",
+      }));
+
+      setChatParticipants(nextParticipants);
+      setSelectedParticipantId(
+        (currentParticipantId) =>
+          currentParticipantId || nextParticipants[0]?.id || "",
+      );
+    }
+  }, [
+    authorId,
+    authorUsername,
+    currentUserId,
+    isAuthor,
+    postId,
+    supabase,
+  ]);
+
   useEffect(() => {
     const channel = supabase
       .channel(`messages:${postId}`)
@@ -87,51 +167,8 @@ export function PostChat({
           table: "messages",
           filter: `post_id=eq.${postId}`,
         },
-        (payload) => {
-          const inserted = payload.new as MessageInsertPayload;
-
-          setMessages((currentMessages) => {
-            if (currentMessages.some((message) => message.id === inserted.id)) {
-              return currentMessages;
-            }
-
-            return [
-              ...currentMessages,
-              normalizeInsertedMessage(inserted, {
-                authorId,
-                authorUsername,
-                currentUserId,
-                participants: chatParticipants,
-              }),
-            ];
-          });
-
-          if (isAuthor) {
-            const participantId =
-              inserted.sender_id === currentUserId
-                ? inserted.receiver_id
-                : inserted.sender_id;
-
-            if (participantId !== currentUserId) {
-              setChatParticipants((currentParticipants) => {
-                if (
-                  currentParticipants.some(
-                    (participant) => participant.id === participantId,
-                  )
-                ) {
-                  return currentParticipants;
-                }
-
-                return [
-                  ...currentParticipants,
-                  { id: participantId, username: "Neighbor" },
-                ];
-              });
-              setSelectedParticipantId((currentParticipantId) =>
-                currentParticipantId || participantId,
-              );
-            }
-          }
+        () => {
+          void refreshMessages();
         },
       )
       .subscribe();
@@ -139,15 +176,23 @@ export function PostChat({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [
-    authorId,
-    authorUsername,
-    chatParticipants,
-    currentUserId,
-    isAuthor,
-    postId,
-    supabase,
-  ]);
+  }, [postId, refreshMessages, supabase]);
+
+  useEffect(() => {
+    const refreshInterval = window.setInterval(() => {
+      void refreshMessages();
+    }, MESSAGE_REFRESH_INTERVAL_MS);
+    const refreshOnFocus = () => {
+      void refreshMessages();
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
+  }, [refreshMessages]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
