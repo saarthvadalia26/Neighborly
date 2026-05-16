@@ -23,49 +23,55 @@ export type FeedPost = {
   title: string;
   description: string;
   creditValue: number;
+  status: "open" | "in_progress" | "completed" | "canceled";
   createdAt: string | null;
 };
 
-type FeedFilter = "all" | "offer" | "need";
+type TypeFilter = "all" | "offer" | "need";
+type StatusFilter = "all" | "open" | "completed";
 
 type PostsFeedProps = {
   posts: FeedPost[];
 };
 
-const feedNouns: Record<FeedFilter, string> = {
+const feedNouns: Record<TypeFilter, string> = {
   all: "swaps",
   offer: "offers",
   need: "needs",
 };
 
+const statusLabels: Record<FeedPost["status"], string> = {
+  open: "Available",
+  in_progress: "In progress",
+  completed: "Completed",
+  canceled: "Canceled",
+};
+
 export function PostsFeed({ posts }: PostsFeedProps) {
-  const [filter, setFilter] = useState<FeedFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (filter === "all") {
-      return posts.filter((post) =>
-        post.title.toLowerCase().includes(normalizedQuery),
-      );
-    }
 
     return posts.filter(
       (post) =>
-        post.type === filter &&
+        (typeFilter === "all" || post.type === typeFilter) &&
+        (statusFilter === "all" || post.status === statusFilter) &&
         post.title.toLowerCase().includes(normalizedQuery),
     );
-  }, [filter, posts, query]);
+  }, [posts, query, statusFilter, typeFilter]);
 
   return (
     <section className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Open swaps</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Swaps</h2>
           <p className="text-sm text-muted-foreground">
-            {filteredPosts.length} {feedNouns[filter]} available
+            {filteredPosts.length} {feedNouns[typeFilter]} shown
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(220px,320px)_auto] sm:items-center">
+        <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto] xl:items-center">
           <label className="relative">
             <span className="sr-only">Search posts by title</span>
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -77,11 +83,21 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             />
           </label>
           <Tabs
-            value={filter}
-            onValueChange={(value) => setFilter(value as FeedFilter)}
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter(value as StatusFilter)}
           >
             <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="all">All statuses</TabsTrigger>
+              <TabsTrigger value="open">Available</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Tabs
+            value={typeFilter}
+            onValueChange={(value) => setTypeFilter(value as TypeFilter)}
+          >
+            <TabsList>
+              <TabsTrigger value="all">All types</TabsTrigger>
               <TabsTrigger value="offer">Offers</TabsTrigger>
               <TabsTrigger value="need">Needs</TabsTrigger>
             </TabsList>
@@ -104,9 +120,20 @@ export function PostsFeed({ posts }: PostsFeedProps) {
                     {post.description}
                   </CardDescription>
                   <CardAction>
-                    <Badge variant={post.type === "offer" ? "default" : "outline"}>
-                      {post.type === "offer" ? "Offer" : "Need"}
-                    </Badge>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Badge
+                        variant={post.type === "offer" ? "default" : "outline"}
+                      >
+                        {post.type === "offer" ? "Offer" : "Need"}
+                      </Badge>
+                      <Badge
+                        variant={
+                          post.status === "completed" ? "secondary" : "outline"
+                        }
+                      >
+                        {statusLabels[post.status]}
+                      </Badge>
+                    </div>
                   </CardAction>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
@@ -127,10 +154,10 @@ export function PostsFeed({ posts }: PostsFeedProps) {
         <div className="flex min-h-52 items-center justify-center rounded-lg border border-dashed bg-muted/20 p-8 text-center">
           <div className="grid gap-2">
             <p className="font-medium">
-              No open {feedNouns[filter]} found.
+              No {feedNouns[typeFilter]} found.
             </p>
             <p className="text-sm text-muted-foreground">
-              Try another search or check back as neighbors add posts.
+              Try another search or change the filters.
             </p>
           </div>
         </div>

@@ -64,8 +64,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .maybeSingle(),
     supabase
       .from("posts")
-      .select("id, type, title, description, credit_value, created_at")
-      .eq("status", "open")
+      .select("id, type, title, description, credit_value, status, created_at")
+      .in("status", ["open", "completed"])
       .order("created_at", { ascending: false }),
   ]);
 
@@ -75,6 +75,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     title: post.title,
     description: post.description,
     creditValue: post.credit_value ?? 1,
+    status: post.status ?? "open",
     createdAt: post.created_at,
   }));
   const creditBalance = profileResult.data?.credit_balance ?? 0;
