@@ -17,7 +17,7 @@ import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 import { transferCredits } from "./actions";
-import { PostChat, type ChatMessage } from "./post-chat";
+import { PostChat, type ChatMessage, type ChatParticipant } from "./post-chat";
 
 export const dynamic = "force-dynamic";
 
@@ -97,16 +97,33 @@ export default async function PostDetailPage({
         .order("created_at", { ascending: true }),
     ]);
 
-  const senderIds = Array.from(
-    new Set((messages ?? []).map((message) => message.sender_id)),
+  const profileIds = Array.from(
+    new Set(
+      (messages ?? [])
+        .flatMap((message) => [message.sender_id, message.receiver_id])
+        .concat([post.author_id, user.id]),
+    ),
   );
-  const { data: senderProfiles } = senderIds.length
-    ? await supabase.from("profiles").select("id, username").in("id", senderIds)
+  const { data: messageProfiles } = profileIds.length
+    ? await supabase.from("profiles").select("id, username").in("id", profileIds)
     : { data: [] };
   const usernameById = new Map(
-    (senderProfiles ?? []).map((profile) => [profile.id, profile.username]),
+    (messageProfiles ?? []).map((profile) => [profile.id, profile.username]),
   );
-  const authorUsername = author?.username ?? "Neighbor";
+  const authorUsername = author?.username ?? usernameById.get(post.author_id) ?? "Neighbor";
+  const isAuthor = user.id === post.author_id;
+  const chatParticipants: ChatParticipant[] = isAuthor
+    ? Array.from(
+        new Set(
+          (messages ?? [])
+            .flatMap((message) => [message.sender_id, message.receiver_id])
+            .filter((profileId) => profileId !== post.author_id),
+        ),
+      ).map((profileId) => ({
+        id: profileId,
+        username: usernameById.get(profileId) ?? "Neighbor",
+      }))
+    : [{ id: post.author_id, username: authorUsername }];
   const chatMessages: ChatMessage[] = (messages ?? []).map((message) => ({
     id: message.id,
     postId: message.post_id,
@@ -119,7 +136,6 @@ export default async function PostDetailPage({
         ? "You"
         : usernameById.get(message.sender_id) ?? "Neighbor",
   }));
-  const isAuthor = user.id === post.author_id;
   const creditValue = post.credit_value ?? 1;
 
   return (
@@ -197,7 +213,8 @@ export default async function PostDetailPage({
           authorUsername={authorUsername}
           currentUserId={user.id}
           initialMessages={chatMessages}
-          canSendMessage={!isAuthor}
+          isAuthor={isAuthor}
+          participants={chatParticipants}
         />
       )}
     </PostDetailShell>

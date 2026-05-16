@@ -18,13 +18,19 @@ export type ChatMessage = {
   senderUsername: string;
 };
 
+export type ChatParticipant = {
+  id: string;
+  username: string;
+};
+
 type PostChatProps = {
   postId: string;
   authorId: string;
   authorUsername: string;
   currentUserId: string;
   initialMessages: ChatMessage[];
-  canSendMessage: boolean;
+  isAuthor: boolean;
+  participants: ChatParticipant[];
 };
 
 type MessageInsertPayload = {
@@ -42,13 +48,33 @@ export function PostChat({
   authorUsername,
   currentUserId,
   initialMessages,
-  canSendMessage,
+  isAuthor,
+  participants,
 }: PostChatProps) {
   const supabase = useMemo(() => createClient(), []);
   const [messages, setMessages] = useState(initialMessages);
+  const [chatParticipants, setChatParticipants] = useState(participants);
+  const [selectedParticipantId, setSelectedParticipantId] = useState(
+    isAuthor ? participants[0]?.id ?? "" : authorId,
+  );
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activeReceiverId = isAuthor ? selectedParticipantId : authorId;
+  const activeReceiverUsername =
+    chatParticipants.find((participant) => participant.id === activeReceiverId)
+      ?.username ?? authorUsername;
+  const visibleMessages = messages.filter((message) => {
+    if (isAuthor) {
+      return (
+        message.senderId === selectedParticipantId ||
+        message.receiverId === selectedParticipantId
+      );
+    }
+
+    return message.senderId === authorId || message.receiverId === authorId;
+  });
+  const canSendMessage = Boolean(activeReceiverId);
 
   useEffect(() => {
     const channel = supabase
@@ -75,9 +101,37 @@ export function PostChat({
                 authorId,
                 authorUsername,
                 currentUserId,
+                participants: chatParticipants,
               }),
             ];
           });
+
+          if (isAuthor) {
+            const participantId =
+              inserted.sender_id === currentUserId
+                ? inserted.receiver_id
+                : inserted.sender_id;
+
+            if (participantId !== currentUserId) {
+              setChatParticipants((currentParticipants) => {
+                if (
+                  currentParticipants.some(
+                    (participant) => participant.id === participantId,
+                  )
+                ) {
+                  return currentParticipants;
+                }
+
+                return [
+                  ...currentParticipants,
+                  { id: participantId, username: "Neighbor" },
+                ];
+              });
+              setSelectedParticipantId((currentParticipantId) =>
+                currentParticipantId || participantId,
+              );
+            }
+          }
         },
       )
       .subscribe();
@@ -85,14 +139,22 @@ export function PostChat({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [authorId, authorUsername, currentUserId, postId, supabase]);
+  }, [
+    authorId,
+    authorUsername,
+    chatParticipants,
+    currentUserId,
+    isAuthor,
+    postId,
+    supabase,
+  ]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedContent = content.trim();
 
-    if (!trimmedContent || isSending) {
+    if (!trimmedContent || isSending || !activeReceiverId) {
       return;
     }
 
@@ -104,7 +166,7 @@ export function PostChat({
       .insert({
         post_id: postId,
         sender_id: currentUserId,
-        receiver_id: authorId,
+        receiver_id: activeReceiverId,
         content: trimmedContent,
       })
       .select("id, post_id, sender_id, receiver_id, content, created_at")
@@ -129,6 +191,7 @@ export function PostChat({
             authorId,
             authorUsername,
             currentUserId,
+            participants: chatParticipants,
           }),
         ];
       });
@@ -142,7 +205,9 @@ export function PostChat({
       <div>
         <h2 className="text-lg font-semibold tracking-tight">Messages</h2>
         <p className="text-sm text-muted-foreground">
-          Chat with the post author about details before swapping.
+          {isAuthor
+            ? "Reply to neighbors who have messaged about this post."
+            : "Chat with the post author about details before swapping."}
         </p>
       </div>
 
@@ -153,9 +218,26 @@ export function PostChat({
         </Alert>
       ) : null}
 
+      {isAuthor && chatParticipants.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {chatParticipants.map((participant) => (
+            <Button
+              key={participant.id}
+              type="button"
+              variant={
+                selectedParticipantId === participant.id ? "default" : "outline"
+              }
+              onClick={() => setSelectedParticipantId(participant.id)}
+            >
+              {participant.username}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+
       <div className="grid max-h-96 gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3">
-        {messages.length > 0 ? (
-          messages.map((message) => {
+        {visibleMessages.length > 0 ? (
+          visibleMessages.map((message) => {
             const isMine = message.senderId === currentUserId;
 
             return (
@@ -193,7 +275,7 @@ export function PostChat({
           <Input
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            placeholder={`Message ${authorUsername}`}
+            placeholder={`Message ${activeReceiverUsername}`}
             maxLength={1000}
           />
           <Button type="submit" disabled={isSending || !content.trim()} className="gap-2">
@@ -203,9 +285,9 @@ export function PostChat({
         </form>
       ) : (
         <Alert>
-          <AlertTitle>Author view</AlertTitle>
+          <AlertTitle>No conversations yet</AlertTitle>
           <AlertDescription>
-            Messages from interested neighbors will appear here.
+            When a neighbor messages you about this post, you can reply here.
           </AlertDescription>
         </Alert>
       )}
@@ -219,8 +301,14 @@ function normalizeInsertedMessage(
     authorId: string;
     authorUsername: string;
     currentUserId: string;
+    participants: ChatParticipant[];
   },
 ): ChatMessage {
+  const participantUsername =
+    context.participants.find(
+      (participant) => participant.id === message.sender_id,
+    )?.username ?? "Neighbor";
+
   return {
     id: message.id,
     postId: message.post_id,
@@ -233,7 +321,7 @@ function normalizeInsertedMessage(
         ? "You"
         : message.sender_id === context.authorId
           ? context.authorUsername
-          : "Neighbor",
+          : participantUsername,
   };
 }
 
