@@ -1,0 +1,233 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Coins } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
+
+import { transferCredits } from "./actions";
+import { PostChat, type ChatMessage } from "./post-chat";
+
+export const dynamic = "force-dynamic";
+
+type PostDetailPageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+  searchParams: Promise<{
+    transfer_error?: string;
+    transferred?: string;
+  }>;
+};
+
+export default async function PostDetailPage({
+  params,
+  searchParams,
+}: PostDetailPageProps) {
+  const { id } = await params;
+  const query = await searchParams;
+
+  if (!hasSupabaseConfig()) {
+    return (
+      <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-4xl gap-6">
+          <Alert>
+            <AlertTitle>Supabase is not configured yet</AlertTitle>
+            <AlertDescription>
+              Add your project URL and anon key to .env.local to view posts.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </main>
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: post, error: postError } = await supabase
+    .from("posts")
+    .select("id, author_id, type, title, description, credit_value, status, created_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (postError) {
+    return (
+      <PostDetailShell>
+        <Alert variant="destructive">
+          <AlertTitle>Could not load post</AlertTitle>
+          <AlertDescription>{postError.message}</AlertDescription>
+        </Alert>
+      </PostDetailShell>
+    );
+  }
+
+  if (!post) {
+    notFound();
+  }
+
+  const [{ data: author }, { data: messages, error: messagesError }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, username")
+        .eq("id", post.author_id)
+        .maybeSingle(),
+      supabase
+        .from("messages")
+        .select("id, post_id, sender_id, receiver_id, content, created_at")
+        .eq("post_id", post.id)
+        .order("created_at", { ascending: true }),
+    ]);
+
+  const senderIds = Array.from(
+    new Set((messages ?? []).map((message) => message.sender_id)),
+  );
+  const { data: senderProfiles } = senderIds.length
+    ? await supabase.from("profiles").select("id, username").in("id", senderIds)
+    : { data: [] };
+  const usernameById = new Map(
+    (senderProfiles ?? []).map((profile) => [profile.id, profile.username]),
+  );
+  const authorUsername = author?.username ?? "Neighbor";
+  const chatMessages: ChatMessage[] = (messages ?? []).map((message) => ({
+    id: message.id,
+    postId: message.post_id,
+    senderId: message.sender_id,
+    receiverId: message.receiver_id,
+    content: message.content,
+    createdAt: message.created_at,
+    senderUsername:
+      message.sender_id === user.id
+        ? "You"
+        : usernameById.get(message.sender_id) ?? "Neighbor",
+  }));
+  const isAuthor = user.id === post.author_id;
+  const creditValue = post.credit_value ?? 1;
+
+  return (
+    <PostDetailShell>
+      {query.transfer_error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Transfer failed</AlertTitle>
+          <AlertDescription>{query.transfer_error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {query.transferred ? (
+        <Alert>
+          <AlertTitle>Credits transferred</AlertTitle>
+          <AlertDescription>{query.transferred}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="grid gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={post.type === "offer" ? "default" : "outline"}>
+                  {post.type === "offer" ? "Offer" : "Need"}
+                </Badge>
+                <Badge variant="secondary">{post.status ?? "open"}</Badge>
+              </div>
+              <CardTitle className="text-2xl">{post.title}</CardTitle>
+              <CardDescription>
+                Posted by {authorUsername} on {formatPostDate(post.created_at)}
+              </CardDescription>
+            </div>
+            <Badge variant="secondary" className="h-8 gap-1.5 px-3">
+              <Coins className="size-4" />
+              {creditValue} Credits
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="whitespace-pre-wrap leading-7 text-muted-foreground">
+            {post.description}
+          </p>
+        </CardContent>
+        {!isAuthor ? (
+          <CardFooter className="justify-between gap-3">
+            {post.status === "open" ? (
+              <form action={transferCredits}>
+                <input type="hidden" name="post_id" value={post.id} />
+                <input type="hidden" name="receiver_id" value={post.author_id} />
+                <input type="hidden" name="amount" value={creditValue} />
+                <Button type="submit" className="gap-2">
+                  <Coins className="size-4" />
+                  Transfer {creditValue} Credits to {authorUsername}
+                </Button>
+              </form>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                This swap has already been completed.
+              </p>
+            )}
+          </CardFooter>
+        ) : null}
+      </Card>
+
+      {messagesError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Could not load messages</AlertTitle>
+          <AlertDescription>{messagesError.message}</AlertDescription>
+        </Alert>
+      ) : (
+        <PostChat
+          postId={post.id}
+          authorId={post.author_id}
+          authorUsername={authorUsername}
+          currentUserId={user.id}
+          initialMessages={chatMessages}
+          canSendMessage={!isAuthor}
+        />
+      )}
+    </PostDetailShell>
+  );
+}
+
+function PostDetailShell({ children }: { children: React.ReactNode }) {
+  return (
+    <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto grid w-full max-w-4xl gap-6">
+        <Button asChild variant="ghost" className="w-fit gap-2">
+          <Link href="/dashboard">
+            <ArrowLeft className="size-4" />
+            Back to marketplace
+          </Link>
+        </Button>
+        {children}
+      </div>
+    </main>
+  );
+}
+
+function formatPostDate(value: string | null) {
+  if (!value) {
+    return "recently";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}

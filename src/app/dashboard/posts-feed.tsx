@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Coins, Search } from "lucide-react";
 
@@ -91,29 +92,35 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       {filteredPosts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredPosts.map((post) => (
-            <Card key={post.id} className="min-h-44">
-              <CardHeader>
-                <CardTitle>{post.title}</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  {post.description}
-                </CardDescription>
-                <CardAction>
-                  <Badge variant={post.type === "offer" ? "default" : "outline"}>
-                    {post.type === "offer" ? "Offer" : "Need"}
+            <Link
+              key={post.id}
+              href={`/dashboard/post/${post.id}`}
+              className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <Card className="min-h-44 transition-colors hover:bg-muted/30">
+                <CardHeader>
+                  <CardTitle>{post.title}</CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {post.description}
+                  </CardDescription>
+                  <CardAction>
+                    <Badge variant={post.type === "offer" ? "default" : "outline"}>
+                      {post.type === "offer" ? "Offer" : "Need"}
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  Posted {formatPostDate(post.createdAt)}
+                </CardContent>
+                <CardFooter className="justify-between">
+                  <span className="text-sm text-muted-foreground">Credit value</span>
+                  <Badge variant="secondary" className="gap-1">
+                    <Coins className="size-3" />
+                    {post.creditValue}
                   </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Posted {formatPostDate(post.createdAt)}
-              </CardContent>
-              <CardFooter className="justify-between">
-                <span className="text-sm text-muted-foreground">Credit value</span>
-                <Badge variant="secondary" className="gap-1">
-                  <Coins className="size-3" />
-                  {post.creditValue}
-                </Badge>
-              </CardFooter>
-            </Card>
+                </CardFooter>
+              </Card>
+            </Link>
           ))}
         </div>
       ) : (

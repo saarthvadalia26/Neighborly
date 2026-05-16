@@ -67,6 +67,15 @@ The Phase 2 SQL migrates older `karma_balance` and `karma_value` columns to
 `credit_balance` and `credit_value`, adds the 1-5 Credit constraint for posts,
 and installs the RLS policies needed by the app.
 
+For messaging and Credit transfers, also run:
+
+```text
+supabase/phase-3-messaging-transactions.sql
+```
+
+This installs message policies, the `transfer_credits` RPC, and enables
+Realtime inserts for the `messages` table when Supabase Realtime is available.
+
 ### 4. Start the app
 
 ```bash

@@ -173,7 +173,17 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      transfer_credits: {
+        Args: {
+          sender_uuid: string;
+          receiver_uuid: string;
+          transfer_amount: number;
+          related_post_id: string;
+        };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
