@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
-import { deleteAccount } from "./actions";
+import { DeleteAccountForm } from "./delete-account-form";
 
 export const dynamic = "force-dynamic";
 
@@ -93,22 +91,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={deleteAccount} className="grid max-w-md gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="confirmation">Type DELETE to confirm</Label>
-              <Input
-                id="confirmation"
-                name="confirmation"
-                autoComplete="off"
-                placeholder="DELETE"
-                required
-              />
-            </div>
-            <Button type="submit" variant="destructive" className="w-fit gap-2">
-              <Trash2 className="size-4" />
-              Delete account
-            </Button>
-          </form>
+          <DeleteAccountForm />
         </CardContent>
       </Card>
     </SettingsShell>

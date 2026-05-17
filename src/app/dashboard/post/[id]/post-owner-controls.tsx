@@ -1,4 +1,7 @@
-import { PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+"use client";
+
+import { useFormStatus } from "react-dom";
+import { LoaderCircle, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -31,10 +34,7 @@ export function PostOwnerControls({ postId, status }: PostOwnerControlsProps) {
           <form action={updatePostStatus}>
             <input type="hidden" name="post_id" value={postId} />
             <input type="hidden" name="status" value="paused" />
-            <Button type="submit" variant="outline" className="gap-2">
-              <PauseCircle className="size-4" />
-              Pause
-            </Button>
+            <PostStatusSubmitButton action="pause" />
           </form>
         ) : null}
 
@@ -42,22 +42,78 @@ export function PostOwnerControls({ postId, status }: PostOwnerControlsProps) {
           <form action={updatePostStatus}>
             <input type="hidden" name="post_id" value={postId} />
             <input type="hidden" name="status" value="open" />
-            <Button type="submit" className="gap-2">
-              <PlayCircle className="size-4" />
-              Resume
-            </Button>
+            <PostStatusSubmitButton action="resume" />
           </form>
         ) : null}
 
         <form action={updatePostStatus}>
           <input type="hidden" name="post_id" value={postId} />
           <input type="hidden" name="status" value="canceled" />
-          <Button type="submit" variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            Remove
-          </Button>
+          <PostStatusSubmitButton action="remove" />
         </form>
       </div>
     </div>
+  );
+}
+
+function PostStatusSubmitButton({
+  action,
+}: {
+  action: "pause" | "resume" | "remove";
+}) {
+  const { pending } = useFormStatus();
+
+  if (action === "pause") {
+    return (
+      <Button
+        type="submit"
+        variant="outline"
+        disabled={pending}
+        aria-busy={pending}
+        className="gap-2"
+      >
+        {pending ? (
+          <LoaderCircle className="size-4 animate-spin" />
+        ) : (
+          <PauseCircle className="size-4" />
+        )}
+        {pending ? "Pausing..." : "Pause"}
+      </Button>
+    );
+  }
+
+  if (action === "resume") {
+    return (
+      <Button
+        type="submit"
+        disabled={pending}
+        aria-busy={pending}
+        className="gap-2"
+      >
+        {pending ? (
+          <LoaderCircle className="size-4 animate-spin" />
+        ) : (
+          <PlayCircle className="size-4" />
+        )}
+        {pending ? "Resuming..." : "Resume"}
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      type="submit"
+      variant="destructive"
+      disabled={pending}
+      aria-busy={pending}
+      className="gap-2"
+    >
+      {pending ? (
+        <LoaderCircle className="size-4 animate-spin" />
+      ) : (
+        <Trash2 className="size-4" />
+      )}
+      {pending ? "Removing..." : "Remove"}
+    </Button>
   );
 }
