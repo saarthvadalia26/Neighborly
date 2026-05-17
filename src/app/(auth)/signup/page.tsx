@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { AuthSubmitButton } from "../auth-submit-button";
 import { signup } from "../actions";
 import { AuthFormMessage } from "../auth-form-message";
 
@@ -66,9 +66,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Sign up
-            </Button>
+            <AuthSubmitButton
+              label="Create account"
+              pendingLabel="Creating account..."
+            />
             <p className="text-center text-sm text-muted-foreground">
               Already swapping?{" "}
               <Link className="font-medium text-foreground underline" href="/login">
