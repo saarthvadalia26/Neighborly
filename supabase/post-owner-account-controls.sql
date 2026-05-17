@@ -111,3 +111,23 @@ end;
 $$;
 
 grant execute on function public.delete_account() to authenticated;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_publication
+    where pubname = 'supabase_realtime'
+  ) and not exists (
+    select 1
+    from pg_publication_rel pr
+    join pg_publication p on p.oid = pr.prpubid
+    join pg_class c on c.oid = pr.prrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where p.pubname = 'supabase_realtime'
+      and n.nspname = 'public'
+      and c.relname = 'posts'
+  ) then
+    alter publication supabase_realtime add table public.posts;
+  end if;
+end $$;

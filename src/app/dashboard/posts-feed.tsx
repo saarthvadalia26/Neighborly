@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Coins, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClient } from "@/lib/supabase/browser";
 
 export type FeedPost = {
   id: string;
@@ -34,6 +35,18 @@ type PostsFeedProps = {
   posts: FeedPost[];
 };
 
+type FeedPostRow = {
+  id: string;
+  type: "offer" | "need";
+  title: string;
+  description: string;
+  credit_value: number | null;
+  status: FeedPost["status"] | null;
+  created_at: string | null;
+};
+
+const POST_REFRESH_INTERVAL_MS = 5000;
+
 const feedNouns: Record<TypeFilter, string> = {
   all: "swaps",
   offer: "offers",
@@ -49,19 +62,71 @@ const statusLabels: Record<FeedPost["status"], string> = {
 };
 
 export function PostsFeed({ posts }: PostsFeedProps) {
+  const supabase = useMemo(() => createClient(), []);
+  const [livePosts, setLivePosts] = useState(posts);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
+  const refreshPosts = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, type, title, description, credit_value, status, created_at")
+      .in("status", ["open", "paused", "completed"])
+      .order("created_at", { ascending: false });
+
+    if (error || !data) {
+      return;
+    }
+
+    setLivePosts(data.map(mapFeedPost));
+  }, [supabase]);
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return posts.filter(
+    return livePosts.filter(
       (post) =>
         (typeFilter === "all" || post.type === typeFilter) &&
         (statusFilter === "all" || post.status === statusFilter) &&
         post.title.toLowerCase().includes(normalizedQuery),
     );
-  }, [posts, query, statusFilter, typeFilter]);
+  }, [livePosts, query, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("dashboard-posts")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "posts",
+        },
+        () => {
+          void refreshPosts();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [refreshPosts, supabase]);
+
+  useEffect(() => {
+    const refreshInterval = window.setInterval(() => {
+      void refreshPosts();
+    }, POST_REFRESH_INTERVAL_MS);
+    const refreshOnFocus = () => {
+      void refreshPosts();
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
+  }, [refreshPosts]);
 
   return (
     <section className="grid gap-5">
@@ -166,6 +231,34 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       )}
     </section>
   );
+}
+
+function mapFeedPost(post: FeedPostRow): FeedPost {
+  return {
+    id: post.id,
+    type: post.type,
+    title: post.title,
+    description: post.description,
+    creditValue: post.credit_value ?? 1,
+    status: normalizePostStatus(post.status),
+    createdAt: post.created_at,
+  };
+}
+
+function normalizePostStatus(
+  status: FeedPost["status"] | null,
+): FeedPost["status"] {
+  if (
+    status === "open" ||
+    status === "paused" ||
+    status === "in_progress" ||
+    status === "completed" ||
+    status === "canceled"
+  ) {
+    return status;
+  }
+
+  return "open";
 }
 
 function formatPostDate(value: string | null) {
