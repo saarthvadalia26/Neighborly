@@ -78,6 +78,13 @@ supabase/phase-3-messaging-transactions.sql
 This installs message policies, the `transfer_credits` RPC, and enables
 Realtime inserts for the `messages` table when Supabase Realtime is available.
 
+For negotiated payments where the final amount can differ from the listed post
+value, run:
+
+```text
+supabase/negotiated-credit-transfers.sql
+```
+
 ### 4. Start the app
 
 ```bash

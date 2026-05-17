@@ -137,9 +137,15 @@ export async function transferCredits(formData: FormData) {
   const taskCompletedConfirmed =
     readString(formData, "task_completed_confirmed") === "yes";
 
-  if (!postId || !receiverId || !Number.isInteger(amount) || amount < 1) {
+  if (
+    !postId ||
+    !receiverId ||
+    !Number.isInteger(amount) ||
+    amount < 1 ||
+    amount > 5
+  ) {
     redirectWithTransferMessage(postId || "", {
-      transfer_error: "Transfer details are incomplete.",
+      transfer_error: "Agreed Credit amount must be from 1 to 5.",
     });
   }
 

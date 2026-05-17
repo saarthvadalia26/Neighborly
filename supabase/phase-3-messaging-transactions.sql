@@ -78,7 +78,6 @@ declare
   post_author uuid;
   post_type text;
   post_status text;
-  post_credit_value integer;
   has_conversation boolean;
 begin
   if auth.uid() is null or auth.uid() <> sender_uuid then
@@ -89,12 +88,12 @@ begin
     raise exception 'You cannot transfer Credits to yourself.';
   end if;
 
-  if transfer_amount is null or transfer_amount < 1 then
-    raise exception 'Transfer amount must be positive.';
+  if transfer_amount is null or transfer_amount < 1 or transfer_amount > 5 then
+    raise exception 'Agreed Credit amount must be from 1 to 5.';
   end if;
 
-  select author_id, type, status, credit_value
-  into post_author, post_type, post_status, post_credit_value
+  select author_id, type, status
+  into post_author, post_type, post_status
   from public.posts
   where id = related_post_id
   for update;
@@ -134,10 +133,6 @@ begin
 
   if post_status <> 'open' then
     raise exception 'This post is not open.';
-  end if;
-
-  if coalesce(post_credit_value, 1) <> transfer_amount then
-    raise exception 'Transfer amount must match the post Credit value.';
   end if;
 
   select credit_balance

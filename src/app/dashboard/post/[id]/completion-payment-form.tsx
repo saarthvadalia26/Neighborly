@@ -1,9 +1,11 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Coins } from "lucide-react";
+import { Coins, LoaderCircle } from "lucide-react";
+import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { transferCredits } from "./actions";
@@ -34,10 +36,12 @@ export function CompletionPaymentForm({
   amount,
 }: CompletionPaymentFormProps) {
   const confirmationId = useId();
+  const amountInputId = useId();
   const recipientSelectId = useId();
   const [selectedReceiverId, setSelectedReceiverId] = useState(
     receiverId ?? recipients?.[0]?.id ?? "",
   );
+  const [agreedAmount, setAgreedAmount] = useState(amount);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const selectedReceiverUsername =
     receiverUsername ??
@@ -58,7 +62,6 @@ export function CompletionPaymentForm({
     <form action={transferCredits} className="grid w-full gap-3">
       <input type="hidden" name="post_id" value={postId} />
       <input type="hidden" name="receiver_id" value={selectedReceiverId} />
-      <input type="hidden" name="amount" value={amount} />
 
       {postType === "need" && recipients ? (
         <div className="grid gap-2">
@@ -79,6 +82,26 @@ export function CompletionPaymentForm({
         </div>
       ) : null}
 
+      <div className="grid gap-2">
+        <Label htmlFor={amountInputId}>Agreed Credit amount</Label>
+        <Input
+          id={amountInputId}
+          name="amount"
+          type="number"
+          min={1}
+          max={5}
+          value={agreedAmount}
+          onChange={(event) =>
+            setAgreedAmount(Number.parseInt(event.target.value, 10) || 1)
+          }
+          required
+        />
+        <p className="text-sm text-muted-foreground">
+          Listed at {amount} Credits. Enter the amount you both agreed on in
+          chat.
+        </p>
+      </div>
+
       <Label
         htmlFor={confirmationId}
         className="items-start gap-3 rounded-lg border bg-muted/30 p-3 leading-6"
@@ -94,19 +117,45 @@ export function CompletionPaymentForm({
           className="mt-1 size-4 accent-primary"
         />
         <span>
-          I confirm the task is completed and I am ready to pay{" "}
-          {selectedReceiverUsername}.
+          I confirm the task is completed and I am ready to pay {agreedAmount}{" "}
+          Credits to {selectedReceiverUsername}.
         </span>
       </Label>
 
-      <Button
-        type="submit"
+      <PaymentSubmitButton
+        amount={agreedAmount}
         disabled={!isConfirmed || !selectedReceiverId}
-        className="w-fit gap-2"
-      >
-        <Coins className="size-4" />
-        Pay {amount} Credits to {selectedReceiverUsername}
-      </Button>
+        receiverUsername={selectedReceiverUsername}
+      />
     </form>
+  );
+}
+
+function PaymentSubmitButton({
+  amount,
+  disabled,
+  receiverUsername,
+}: {
+  amount: number;
+  disabled: boolean;
+  receiverUsername: string;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      disabled={disabled || pending}
+      className="w-fit gap-2"
+    >
+      {pending ? (
+        <LoaderCircle className="size-4 animate-spin" />
+      ) : (
+        <Coins className="size-4" />
+      )}
+      {pending
+        ? "Paying..."
+        : `Pay ${amount} Credits to ${receiverUsername}`}
+    </Button>
   );
 }
