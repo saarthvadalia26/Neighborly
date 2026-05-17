@@ -198,10 +198,6 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
-      delete_account: {
-        Args: Record<PropertyKey, never>;
-        Returns: undefined;
-      };
       transfer_credits: {
         Args: {
           sender_uuid: string;

@@ -86,8 +86,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         <CardHeader>
           <CardTitle>Delete account</CardTitle>
           <CardDescription>
-            This anonymizes your profile, cancels your available posts, signs
-            you out, and keeps past transactions for record keeping.
+            This permanently deletes your profile, Supabase Auth user, posts,
+            messages, and transaction records involving your account.
           </CardDescription>
         </CardHeader>
         <CardContent>

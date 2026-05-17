@@ -76,41 +76,7 @@ with check (
   )
 );
 
-create or replace function public.delete_account()
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  account_id uuid := auth.uid();
-begin
-  if account_id is null then
-    raise exception 'You must be signed in to delete your account.';
-  end if;
-
-  update public.posts
-  set status = 'canceled'
-  where author_id = account_id
-    and status in ('open', 'paused', 'in_progress');
-
-  update public.profiles
-  set
-    username = 'deleted-user-' || left(replace(account_id::text, '-', ''), 18),
-    avatar_url = null,
-    community_id = null,
-    credit_balance = 0,
-    is_deleted = true,
-    deleted_at = now()
-  where id = account_id;
-
-  if not found then
-    raise exception 'Profile not found.';
-  end if;
-end;
-$$;
-
-grant execute on function public.delete_account() to authenticated;
+drop function if exists public.delete_account();
 
 do $$
 begin

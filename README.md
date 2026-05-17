@@ -39,9 +39,11 @@ Then add your Supabase project values:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-You can find these in Supabase under **Project Settings > API**.
+You can find these in Supabase under **Project Settings > API**. Keep the
+service role key server-only; never expose it with a `NEXT_PUBLIC_` prefix.
 
 ### 3. Set up Supabase
 
@@ -105,5 +107,6 @@ supabase/
 
 1. Push this project to GitHub.
 2. Import it into Vercel.
-3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and
+   `SUPABASE_SERVICE_ROLE_KEY`.
 4. Deploy.
