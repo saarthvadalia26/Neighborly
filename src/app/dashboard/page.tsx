@@ -5,6 +5,7 @@ import { Coins, LogOut, Settings } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { CreditPricingPost } from "@/lib/credit-guidance";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -79,6 +80,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     status: post.status ?? "open",
     createdAt: post.created_at,
   }));
+  const pricingPosts: CreditPricingPost[] = (postsResult.data ?? []).map(
+    (post) => ({
+      type: post.type,
+      title: post.title,
+      creditValue: post.credit_value,
+    }),
+  );
   const creditBalance = profileResult.data?.credit_balance ?? 0;
   const username = profileResult.data?.username ?? user.email ?? "Neighbor";
 
@@ -104,7 +112,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <PostCreateDialog />
+            <PostCreateDialog pricingPosts={pricingPosts} />
             <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
               <Link href="/settings">
                 <Settings className="size-4" />

@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { CreditPricingPost } from "@/lib/credit-guidance";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,6 +44,19 @@ export default async function CreatePostPage() {
     redirect("/login");
   }
 
+  const { data: pricingRows } = await supabase
+    .from("posts")
+    .select("type, title, credit_value")
+    .in("status", ["open", "paused", "completed"])
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  const pricingPosts: CreditPricingPost[] = (pricingRows ?? []).map((post) => ({
+    type: post.type,
+    title: post.title,
+    creditValue: post.credit_value,
+  }));
+
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-2xl gap-6">
@@ -61,7 +75,7 @@ export default async function CreatePostPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CreatePostForm />
+            <CreatePostForm pricingPosts={pricingPosts} />
           </CardContent>
         </Card>
       </div>

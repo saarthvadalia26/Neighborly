@@ -1,72 +1,22 @@
 "use client";
 
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  CreatePostFields,
+  CreatePostSubmitButton,
+} from "@/components/create-post-fields";
+import type { CreditPricingPost } from "@/lib/credit-guidance";
 
 import { createPost } from "../dashboard/actions";
 
-type PostType = "offer" | "need";
-
-export function CreatePostForm() {
-  const [type, setType] = useState<PostType>("offer");
-
+export function CreatePostForm({
+  pricingPosts,
+}: {
+  pricingPosts: CreditPricingPost[];
+}) {
   return (
     <form action={createPost} className="grid gap-4">
-      <input type="hidden" name="type" value={type} />
-
-      <div className="grid gap-2">
-        <Label>Post type</Label>
-        <Tabs value={type} onValueChange={(value) => setType(value as PostType)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="offer">Offer</TabsTrigger>
-            <TabsTrigger value="need">Need</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          name="title"
-          minLength={3}
-          maxLength={100}
-          placeholder="Bike tune-up, moving boxes, math tutoring..."
-          required
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          minLength={10}
-          maxLength={1000}
-          placeholder="Add enough detail for a neighbor to understand the swap."
-          required
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="credit_value">Credit value</Label>
-        <Input
-          id="credit_value"
-          name="credit_value"
-          type="number"
-          min={1}
-          max={5}
-          defaultValue={1}
-          required
-        />
-      </div>
-
-      <Button type="submit">Create post</Button>
+      <CreatePostFields pricingPosts={pricingPosts} />
+      <CreatePostSubmitButton className="w-fit" />
     </form>
   );
 }
