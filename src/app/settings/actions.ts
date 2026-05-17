@@ -26,6 +26,14 @@ function redirectWithMessage(params: { error?: string; message?: string }): neve
   redirect(`/settings?${searchParams.toString()}`);
 }
 
+function getDeleteAccountErrorMessage(message: string) {
+  if (message.toLowerCase().includes("permission denied for table")) {
+    return `${message}. Confirm SUPABASE_SERVICE_ROLE_KEY is the service_role key, not the anon key, then run supabase/account-deletion-service-role-grants.sql in Supabase.`;
+  }
+
+  return message;
+}
+
 async function deleteAccountRows(userId: string) {
   const admin = createAdminClient();
 
@@ -131,10 +139,20 @@ export async function deleteAccount(formData: FormData) {
     });
   }
 
+  if (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ===
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    redirectWithMessage({
+      error:
+        "SUPABASE_SERVICE_ROLE_KEY is set to the anon public key. Replace it with the Supabase service_role key in Vercel and local env.",
+    });
+  }
+
   const error = await deleteAccountRows(user.id);
 
   if (error) {
-    redirectWithMessage({ error: error.message });
+    redirectWithMessage({ error: getDeleteAccountErrorMessage(error.message) });
   }
 
   await supabase.auth.signOut();

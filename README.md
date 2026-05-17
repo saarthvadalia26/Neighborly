@@ -85,6 +85,15 @@ value, run:
 supabase/negotiated-credit-transfers.sql
 ```
 
+For hard account deletion, add `SUPABASE_SERVICE_ROLE_KEY` in Vercel and run:
+
+```text
+supabase/account-deletion-service-role-grants.sql
+```
+
+This grants the server-only service role client permission to clean up profiles,
+posts, messages, and transactions before deleting the Supabase Auth user.
+
 ### 4. Start the app
 
 ```bash

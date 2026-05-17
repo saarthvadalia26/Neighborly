@@ -1,0 +1,27 @@
+-- Required for server-side hard account deletion through the Supabase
+-- service role client.
+--
+-- Run this in the Supabase SQL Editor if deleting an account shows:
+-- "permission denied for table posts" or another app table.
+
+grant usage on schema public to service_role;
+
+grant select, insert, update, delete
+on public.profiles
+to service_role;
+
+grant select, insert, update, delete
+on public.posts
+to service_role;
+
+grant select, insert, update, delete
+on public.messages
+to service_role;
+
+grant select, insert, update, delete
+on public.transactions
+to service_role;
+
+grant usage, select
+on all sequences in schema public
+to service_role;
