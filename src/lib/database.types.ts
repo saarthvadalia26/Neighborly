@@ -17,6 +17,8 @@ export type Database = {
           credit_balance: number | null;
           community_id: string | null;
           created_at: string | null;
+          deleted_at: string | null;
+          is_deleted: boolean | null;
         };
         Insert: {
           id: string;
@@ -25,6 +27,8 @@ export type Database = {
           credit_balance?: number | null;
           community_id?: string | null;
           created_at?: string | null;
+          deleted_at?: string | null;
+          is_deleted?: boolean | null;
         };
         Update: {
           id?: string;
@@ -33,6 +37,8 @@ export type Database = {
           credit_balance?: number | null;
           community_id?: string | null;
           created_at?: string | null;
+          deleted_at?: string | null;
+          is_deleted?: boolean | null;
         };
         Relationships: [];
       };
@@ -44,7 +50,13 @@ export type Database = {
           title: string;
           description: string;
           credit_value: number | null;
-          status: "open" | "in_progress" | "completed" | "canceled" | null;
+          status:
+            | "open"
+            | "paused"
+            | "in_progress"
+            | "completed"
+            | "canceled"
+            | null;
           created_at: string | null;
         };
         Insert: {
@@ -54,7 +66,13 @@ export type Database = {
           title: string;
           description: string;
           credit_value?: number | null;
-          status?: "open" | "in_progress" | "completed" | "canceled" | null;
+          status?:
+            | "open"
+            | "paused"
+            | "in_progress"
+            | "completed"
+            | "canceled"
+            | null;
           created_at?: string | null;
         };
         Update: {
@@ -64,7 +82,13 @@ export type Database = {
           title?: string;
           description?: string;
           credit_value?: number | null;
-          status?: "open" | "in_progress" | "completed" | "canceled" | null;
+          status?:
+            | "open"
+            | "paused"
+            | "in_progress"
+            | "completed"
+            | "canceled"
+            | null;
           created_at?: string | null;
         };
         Relationships: [
@@ -174,6 +198,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      delete_account: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
       transfer_credits: {
         Args: {
           sender_uuid: string;

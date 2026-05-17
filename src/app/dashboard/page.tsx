@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Coins, LogOut } from "lucide-react";
+import { Coins, LogOut, Settings } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +66,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     supabase
       .from("posts")
       .select("id, type, title, description, credit_value, status, created_at")
-      .in("status", ["open", "completed"])
+      .in("status", ["open", "paused", "completed"])
       .order("created_at", { ascending: false }),
   ]);
 
@@ -104,6 +105,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <PostCreateDialog />
+            <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
+              <Link href="/settings">
+                <Settings className="size-4" />
+                Settings
+              </Link>
+            </Button>
             <form action={logout}>
               <Button type="submit" variant="outline" className="w-full gap-2 sm:w-auto">
                 <LogOut className="size-4" />

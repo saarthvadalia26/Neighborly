@@ -1,0 +1,113 @@
+alter table public.profiles
+  add column if not exists is_deleted boolean default false;
+
+alter table public.profiles
+  add column if not exists deleted_at timestamp with time zone;
+
+alter table public.profiles
+  alter column is_deleted set default false;
+
+alter table public.posts
+  drop constraint if exists posts_status_check;
+
+alter table public.posts
+  add constraint posts_status_check
+  check (status in ('open', 'paused', 'in_progress', 'completed', 'canceled'));
+
+grant update on public.posts to authenticated;
+
+drop policy if exists "Open posts are readable by everyone" on public.posts;
+drop policy if exists "Authenticated users can create posts" on public.posts;
+drop policy if exists "Users can update their own posts" on public.posts;
+drop policy if exists "Authors can update their own posts" on public.posts;
+drop policy if exists "Post authors can read own posts" on public.posts;
+
+create policy "Open posts are readable by everyone"
+on public.posts for select
+to anon, authenticated
+using (
+  status = 'open'
+  and exists (
+    select 1
+    from public.profiles
+    where profiles.id = posts.author_id
+      and coalesce(profiles.is_deleted, false) = false
+  )
+);
+
+create policy "Post authors can read own posts"
+on public.posts for select
+to authenticated
+using (auth.uid() = author_id);
+
+create policy "Authenticated users can create posts"
+on public.posts for insert
+to authenticated
+with check (
+  auth.uid() = author_id
+  and exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and coalesce(profiles.is_deleted, false) = false
+  )
+);
+
+create policy "Authors can update their own posts"
+on public.posts for update
+to authenticated
+using (
+  auth.uid() = author_id
+  and exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and coalesce(profiles.is_deleted, false) = false
+  )
+)
+with check (
+  auth.uid() = author_id
+  and status in ('open', 'paused', 'in_progress', 'completed', 'canceled')
+  and exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and coalesce(profiles.is_deleted, false) = false
+  )
+);
+
+create or replace function public.delete_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  account_id uuid := auth.uid();
+begin
+  if account_id is null then
+    raise exception 'You must be signed in to delete your account.';
+  end if;
+
+  update public.posts
+  set status = 'canceled'
+  where author_id = account_id
+    and status in ('open', 'paused', 'in_progress');
+
+  update public.profiles
+  set
+    username = 'deleted-user-' || left(replace(account_id::text, '-', ''), 18),
+    avatar_url = null,
+    community_id = null,
+    credit_balance = 0,
+    is_deleted = true,
+    deleted_at = now()
+  where id = account_id;
+
+  if not found then
+    raise exception 'Profile not found.';
+  end if;
+end;
+$$;
+
+grant execute on function public.delete_account() to authenticated;

@@ -17,6 +17,7 @@ import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 import { CompletionPaymentForm } from "./completion-payment-form";
+import { PostOwnerControls } from "./post-owner-controls";
 import { PostChat, type ChatMessage, type ChatParticipant } from "./post-chat";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,8 @@ type PostDetailPageProps = {
     id: string;
   }>;
   searchParams: Promise<{
+    action_error?: string;
+    action_message?: string;
     transfer_error?: string;
     transferred?: string;
   }>;
@@ -139,6 +142,8 @@ export default async function PostDetailPage({
   const creditValue = post.credit_value ?? 1;
   const shouldShowPaymentForm =
     (post.type === "offer" && !isAuthor) || (post.type === "need" && isAuthor);
+  const shouldShowOwnerControls =
+    isAuthor && post.status !== "completed" && post.status !== "canceled";
 
   return (
     <PostDetailShell>
@@ -153,6 +158,20 @@ export default async function PostDetailPage({
         <Alert>
           <AlertTitle>Credits transferred</AlertTitle>
           <AlertDescription>{query.transferred}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {query.action_error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Post update failed</AlertTitle>
+          <AlertDescription>{query.action_error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {query.action_message ? (
+        <Alert>
+          <AlertTitle>Post updated</AlertTitle>
+          <AlertDescription>{query.action_message}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -182,6 +201,11 @@ export default async function PostDetailPage({
             {post.description}
           </p>
         </CardContent>
+        {shouldShowOwnerControls ? (
+          <CardFooter>
+            <PostOwnerControls postId={post.id} status={post.status} />
+          </CardFooter>
+        ) : null}
         {shouldShowPaymentForm ? (
           <CardFooter className="grid gap-3">
             {post.status === "open" ? (
@@ -263,6 +287,8 @@ function formatStatus(value: string | null) {
     case "open":
     case null:
       return "Available";
+    case "paused":
+      return "Paused";
     case "in_progress":
       return "In progress";
     case "completed":

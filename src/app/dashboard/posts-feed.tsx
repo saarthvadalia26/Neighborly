@@ -23,12 +23,12 @@ export type FeedPost = {
   title: string;
   description: string;
   creditValue: number;
-  status: "open" | "in_progress" | "completed" | "canceled";
+  status: "open" | "paused" | "in_progress" | "completed" | "canceled";
   createdAt: string | null;
 };
 
 type TypeFilter = "all" | "offer" | "need";
-type StatusFilter = "all" | "open" | "completed";
+type StatusFilter = "all" | "open" | "paused" | "completed";
 
 type PostsFeedProps = {
   posts: FeedPost[];
@@ -42,6 +42,7 @@ const feedNouns: Record<TypeFilter, string> = {
 
 const statusLabels: Record<FeedPost["status"], string> = {
   open: "Available",
+  paused: "Paused",
   in_progress: "In progress",
   completed: "Completed",
   canceled: "Canceled",
@@ -89,6 +90,7 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             <TabsList>
               <TabsTrigger value="all">All statuses</TabsTrigger>
               <TabsTrigger value="open">Available</TabsTrigger>
+              <TabsTrigger value="paused">Paused</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
             </TabsList>
           </Tabs>

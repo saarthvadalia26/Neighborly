@@ -13,9 +13,22 @@ function readString(formData: FormData, key: string) {
 
 function redirectWithTransferMessage(
   postId: string,
-  params: { transfer_error?: string; transferred?: string },
+  params: {
+    action_error?: string;
+    action_message?: string;
+    transfer_error?: string;
+    transferred?: string;
+  },
 ): never {
   const searchParams = new URLSearchParams();
+
+  if (params.action_error) {
+    searchParams.set("action_error", params.action_error);
+  }
+
+  if (params.action_message) {
+    searchParams.set("action_message", params.action_message);
+  }
 
   if (params.transfer_error) {
     searchParams.set("transfer_error", params.transfer_error);
@@ -26,6 +39,95 @@ function redirectWithTransferMessage(
   }
 
   redirect(`/dashboard/post/${postId}?${searchParams.toString()}`);
+}
+
+function redirectDashboardWithMessage(params: { message?: string }): never {
+  const searchParams = new URLSearchParams();
+
+  if (params.message) {
+    searchParams.set("message", params.message);
+  }
+
+  redirect(`/dashboard?${searchParams.toString()}`);
+}
+
+export async function updatePostStatus(formData: FormData) {
+  const postId = readString(formData, "post_id");
+  const nextStatus = readString(formData, "status");
+
+  if (!postId || !["open", "paused", "canceled"].includes(nextStatus)) {
+    redirectWithTransferMessage(postId || "", {
+      action_error: "Post status update details are incomplete.",
+    });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: post, error: postError } = await supabase
+    .from("posts")
+    .select("id, status")
+    .eq("id", postId)
+    .eq("author_id", user.id)
+    .maybeSingle();
+
+  if (postError || !post) {
+    redirectWithTransferMessage(postId, {
+      action_error: postError?.message ?? "Post not found.",
+    });
+  }
+
+  if (post.status === "completed") {
+    redirectWithTransferMessage(postId, {
+      action_error: "Completed posts cannot be changed.",
+    });
+  }
+
+  if (post.status === "canceled") {
+    redirectWithTransferMessage(postId, {
+      action_error: "Removed posts cannot be changed.",
+    });
+  }
+
+  if (nextStatus === "open" && post.status !== "paused") {
+    redirectWithTransferMessage(postId, {
+      action_error: "Only paused posts can be resumed.",
+    });
+  }
+
+  if (nextStatus === "paused" && post.status !== "open") {
+    redirectWithTransferMessage(postId, {
+      action_error: "Only available posts can be paused.",
+    });
+  }
+
+  const { error: updateError } = await supabase
+    .from("posts")
+    .update({ status: nextStatus as "open" | "paused" | "canceled" })
+    .eq("id", postId)
+    .eq("author_id", user.id);
+
+  if (updateError) {
+    redirectWithTransferMessage(postId, { action_error: updateError.message });
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/post/${postId}`);
+
+  if (nextStatus === "canceled") {
+    redirectDashboardWithMessage({ message: "Post removed." });
+  }
+
+  redirectWithTransferMessage(postId, {
+    action_message:
+      nextStatus === "paused" ? "Post paused." : "Post resumed.",
+  });
 }
 
 export async function transferCredits(formData: FormData) {

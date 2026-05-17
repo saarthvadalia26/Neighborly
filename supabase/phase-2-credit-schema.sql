@@ -16,7 +16,7 @@ create table if not exists public.posts (
   title text not null,
   description text not null,
   credit_value integer default 1 check (credit_value between 1 and 5),
-  status text default 'open' check (status in ('open', 'in_progress', 'completed', 'canceled')),
+  status text default 'open' check (status in ('open', 'paused', 'in_progress', 'completed', 'canceled')),
   created_at timestamp with time zone default now()
 );
 
