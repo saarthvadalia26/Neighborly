@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Coins, LogOut, Settings } from "lucide-react";
+import { Coins, History, Settings } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ToastNotice } from "@/components/toast-notice";
 import type { CreditPricingPost } from "@/lib/credit-guidance";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "../(auth)/actions";
 import { PostsFeed, type FeedPost } from "./posts-feed";
 import { PostCreateDialog } from "./post-create-dialog";
+import { SignOutButton } from "./sign-out-button";
 
 export const dynamic = "force-dynamic";
 
@@ -114,32 +116,36 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <div className="flex flex-col gap-2 sm:flex-row">
             <PostCreateDialog pricingPosts={pricingPosts} />
             <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
+              <Link href="/dashboard/activity">
+                <History className="size-4" />
+                My activity
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
               <Link href="/settings">
                 <Settings className="size-4" />
                 Settings
               </Link>
             </Button>
             <form action={logout}>
-              <Button type="submit" variant="outline" className="w-full gap-2 sm:w-auto">
-                <LogOut className="size-4" />
-                Sign out
-              </Button>
+              <SignOutButton />
             </form>
           </div>
         </header>
 
         {params.create_error ? (
-          <Alert variant="destructive">
-            <AlertTitle>Post was not created</AlertTitle>
-            <AlertDescription>{params.create_error}</AlertDescription>
-          </Alert>
+          <ToastNotice
+            variant="error"
+            title="Post was not created"
+            description={params.create_error}
+          />
         ) : null}
 
         {params.message ? (
-          <Alert>
-            <AlertTitle>Done</AlertTitle>
-            <AlertDescription>{params.message}</AlertDescription>
-          </Alert>
+          <ToastNotice
+            title={params.message === "Post created." ? "Post created" : "Done"}
+            description={params.message}
+          />
         ) : null}
 
         {profileResult.error ? (

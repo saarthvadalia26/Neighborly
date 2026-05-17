@@ -166,7 +166,7 @@ export async function transferCredits(formData: FormData) {
 
   const { data: post, error: postError } = await supabase
     .from("posts")
-    .select("author_id, type")
+    .select("author_id, type, status")
     .eq("id", postId)
     .maybeSingle();
 
@@ -179,6 +179,18 @@ export async function transferCredits(formData: FormData) {
   if (post.type === "offer" && receiverId !== post.author_id) {
     redirectWithTransferMessage(postId, {
       transfer_error: "Offer payments must go to the post author.",
+    });
+  }
+
+  if (post.status === "completed") {
+    redirectWithTransferMessage(postId, {
+      transfer_error: "This transaction is already completed.",
+    });
+  }
+
+  if (post.status !== "open") {
+    redirectWithTransferMessage(postId, {
+      transfer_error: "Credits can only be paid while this swap is available.",
     });
   }
 

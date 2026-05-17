@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coins, Search } from "lucide-react";
+import { Coins, LoaderCircle, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -67,18 +67,25 @@ export function PostsFeed({ posts }: PostsFeedProps) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshPosts = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("id, type, title, description, credit_value, status, created_at")
-      .in("status", ["open", "paused", "completed"])
-      .order("created_at", { ascending: false });
+    setIsRefreshing(true);
 
-    if (error || !data) {
-      return;
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("id, type, title, description, credit_value, status, created_at")
+        .in("status", ["open", "paused", "completed"])
+        .order("created_at", { ascending: false });
+
+      if (error || !data) {
+        return;
+      }
+
+      setLivePosts(data.map(mapFeedPost));
+    } finally {
+      setIsRefreshing(false);
     }
-
-    setLivePosts(data.map(mapFeedPost));
   }, [supabase]);
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -90,6 +97,9 @@ export function PostsFeed({ posts }: PostsFeedProps) {
         post.title.toLowerCase().includes(normalizedQuery),
     );
   }, [livePosts, query, statusFilter, typeFilter]);
+  const activePostsCount = livePosts.filter(
+    (post) => post.status === "open",
+  ).length;
 
   useEffect(() => {
     const channel = supabase
@@ -133,9 +143,17 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Swaps</h2>
-          <p className="text-sm text-muted-foreground">
-            {filteredPosts.length} {feedNouns[typeFilter]} shown
-          </p>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              {filteredPosts.length} {feedNouns[typeFilter]} shown
+            </span>
+            {isRefreshing ? (
+              <span className="inline-flex items-center gap-1">
+                <LoaderCircle className="size-3.5 animate-spin" />
+                Updating
+              </span>
+            ) : null}
+          </div>
         </div>
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto] xl:items-center">
           <label className="relative">
@@ -171,6 +189,18 @@ export function PostsFeed({ posts }: PostsFeedProps) {
           </Tabs>
         </div>
       </div>
+
+      {activePostsCount === 0 && livePosts.length > 0 ? (
+        <Card className="border-dashed bg-muted/20">
+          <CardHeader>
+            <CardTitle>No active swaps right now</CardTitle>
+            <CardDescription>
+              The marketplace only has paused or completed posts at the moment.
+              Start a fresh need or offer when you are ready.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       {filteredPosts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -218,18 +248,44 @@ export function PostsFeed({ posts }: PostsFeedProps) {
           ))}
         </div>
       ) : (
-        <div className="flex min-h-52 items-center justify-center rounded-lg border border-dashed bg-muted/20 p-8 text-center">
-          <div className="grid gap-2">
-            <p className="font-medium">
-              No {feedNouns[typeFilter]} found.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Try another search or change the filters.
-            </p>
-          </div>
-        </div>
+        <EmptyFeedState
+          hasAnyPosts={livePosts.length > 0}
+          typeFilter={typeFilter}
+        />
       )}
     </section>
+  );
+}
+
+function EmptyFeedState({
+  hasAnyPosts,
+  typeFilter,
+}: {
+  hasAnyPosts: boolean;
+  typeFilter: TypeFilter;
+}) {
+  const title = hasAnyPosts
+    ? `No ${feedNouns[typeFilter]} match these filters`
+    : typeFilter === "need"
+      ? "No requests in your area yet"
+      : typeFilter === "offer"
+        ? "No offers in your area yet"
+        : "No active swaps in your area yet";
+  const description = hasAnyPosts
+    ? "Try another search or change the filters to widen the marketplace."
+    : typeFilter === "need"
+      ? "Be the first to post a need and let nearby neighbors know how they can help."
+      : typeFilter === "offer"
+        ? "Be the first to offer a useful skill, tool, or errand to nearby neighbors."
+        : "Be the first to post a need or offer and get the neighborhood moving.";
+
+  return (
+    <Card className="bg-muted/20 text-center">
+      <CardHeader className="mx-auto max-w-md">
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+    </Card>
   );
 }
 

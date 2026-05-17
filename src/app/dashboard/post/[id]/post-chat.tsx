@@ -8,11 +8,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { MessageCircle, Send, X } from "lucide-react";
+import { LoaderCircle, MessageCircle, Send, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ToastNotice } from "@/components/toast-notice";
 import { createClient } from "@/lib/supabase/browser";
 
 export type ChatMessage = {
@@ -37,6 +38,7 @@ type PostChatProps = {
   currentUserId: string;
   initialMessages: ChatMessage[];
   isAuthor: boolean;
+  isThreadClosed: boolean;
   participants: ChatParticipant[];
 };
 
@@ -64,6 +66,7 @@ export function PostChat({
   currentUserId,
   initialMessages,
   isAuthor,
+  isThreadClosed,
   participants,
 }: PostChatProps) {
   const supabase = useMemo(() => createClient(), []);
@@ -94,7 +97,7 @@ export function PostChat({
 
     return message.senderId === authorId || message.receiverId === authorId;
   });
-  const canSendMessage = Boolean(activeReceiverId);
+  const canSendMessage = Boolean(activeReceiverId) && !isThreadClosed;
 
   const refreshMessages = useCallback(async () => {
     const { data: refreshedMessages, error: refreshError } = await supabase
@@ -252,7 +255,7 @@ export function PostChat({
 
     const trimmedContent = content.trim();
 
-    if (!trimmedContent || isSending || !activeReceiverId) {
+    if (!trimmedContent || isSending || !activeReceiverId || isThreadClosed) {
       return;
     }
 
@@ -354,10 +357,11 @@ export function PostChat({
       </div>
 
       {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>Message not sent</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <ToastNotice
+          variant="error"
+          title="Message not sent"
+          description={error}
+        />
       ) : null}
 
       {isAuthor && chatParticipants.length > 0 ? (
@@ -412,21 +416,45 @@ export function PostChat({
         )}
       </div>
 
-      {canSendMessage ? (
+      {isThreadClosed ? (
+        <div className="grid gap-3">
+          <Alert>
+            <AlertTitle>Transaction Completed</AlertTitle>
+            <AlertDescription>
+              This swap is complete, so the message thread is closed.
+            </AlertDescription>
+          </Alert>
+          <form className="flex gap-2">
+            <Input
+              disabled
+              placeholder="Transaction completed - messages are closed"
+            />
+            <Button type="button" disabled className="gap-2">
+              <Send className="size-4" />
+              Send
+            </Button>
+          </form>
+        </div>
+      ) : canSendMessage ? (
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             value={content}
             onChange={(event) => setContent(event.target.value)}
             placeholder={`Message ${activeReceiverUsername}`}
             maxLength={1000}
+            disabled={isSending}
           />
           <Button
             type="submit"
             disabled={isSending || !content.trim()}
             className="gap-2"
           >
-            <Send className="size-4" />
-            Send
+            {isSending ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
+            {isSending ? "Sending" : "Send"}
           </Button>
         </form>
       ) : (

@@ -141,21 +141,24 @@ function PaymentSubmitButton({
   receiverUsername: string;
 }) {
   const { pending } = useFormStatus();
+  const buttonLabel = pending
+    ? `Paying ${amount} Credits...`
+    : `Pay ${amount} Credits to ${receiverUsername}`;
 
   return (
     <Button
       type="submit"
       disabled={disabled || pending}
-      className="w-fit gap-2"
+      aria-busy={pending}
+      aria-live="polite"
+      className="w-fit min-w-56 gap-2"
     >
       {pending ? (
-        <LoaderCircle className="size-4 animate-spin" />
+        <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
       ) : (
-        <Coins className="size-4" />
+        <Coins aria-hidden="true" className="size-4" />
       )}
-      {pending
-        ? "Paying..."
-        : `Pay ${amount} Credits to ${receiverUsername}`}
+      <span>{buttonLabel}</span>
     </Button>
   );
 }

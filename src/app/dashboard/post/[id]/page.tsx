@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Coins } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Coins } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ToastNotice } from "@/components/toast-notice";
 import {
   Card,
   CardContent,
@@ -140,7 +141,8 @@ export default async function PostDetailPage({
         : usernameById.get(message.sender_id) ?? "Neighbor",
   }));
   const creditValue = post.credit_value ?? 1;
-  const shouldShowPaymentForm =
+  const isCompleted = post.status === "completed";
+  const shouldShowPaymentArea =
     (post.type === "offer" && !isAuthor) || (post.type === "need" && isAuthor);
   const shouldShowOwnerControls =
     isAuthor && post.status !== "completed" && post.status !== "canceled";
@@ -148,31 +150,30 @@ export default async function PostDetailPage({
   return (
     <PostDetailShell>
       {query.transfer_error ? (
-        <Alert variant="destructive">
-          <AlertTitle>Transfer failed</AlertTitle>
-          <AlertDescription>{query.transfer_error}</AlertDescription>
-        </Alert>
+        <ToastNotice
+          variant="error"
+          title="Transfer failed"
+          description={query.transfer_error}
+        />
       ) : null}
 
       {query.transferred ? (
-        <Alert>
-          <AlertTitle>Credits transferred</AlertTitle>
-          <AlertDescription>{query.transferred}</AlertDescription>
-        </Alert>
+        <ToastNotice
+          title="Credits transferred"
+          description={query.transferred}
+        />
       ) : null}
 
       {query.action_error ? (
-        <Alert variant="destructive">
-          <AlertTitle>Post update failed</AlertTitle>
-          <AlertDescription>{query.action_error}</AlertDescription>
-        </Alert>
+        <ToastNotice
+          variant="error"
+          title="Post update failed"
+          description={query.action_error}
+        />
       ) : null}
 
       {query.action_message ? (
-        <Alert>
-          <AlertTitle>Post updated</AlertTitle>
-          <AlertDescription>{query.action_message}</AlertDescription>
-        </Alert>
+        <ToastNotice title="Post updated" description={query.action_message} />
       ) : null}
 
       <Card>
@@ -206,9 +207,14 @@ export default async function PostDetailPage({
             <PostOwnerControls postId={post.id} status={post.status} />
           </CardFooter>
         ) : null}
-        {shouldShowPaymentForm ? (
+        {shouldShowPaymentArea ? (
           <CardFooter className="grid gap-3">
-            {post.status === "open" ? (
+            {isCompleted ? (
+              <Badge variant="secondary" className="h-8 w-fit gap-1.5 px-3">
+                <CheckCircle2 className="size-4" />
+                Transaction Completed
+              </Badge>
+            ) : post.status === "open" ? (
               post.type === "offer" ? (
                 <CompletionPaymentForm
                   postId={post.id}
@@ -246,6 +252,7 @@ export default async function PostDetailPage({
           authorUsername={authorUsername}
           currentUserId={user.id}
           initialMessages={chatMessages}
+          isThreadClosed={isCompleted}
           isAuthor={isAuthor}
           participants={chatParticipants}
         />
