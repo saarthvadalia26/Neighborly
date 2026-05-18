@@ -63,7 +63,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const [profileResult, postsResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("username, credit_balance")
+      .select("name, credit_balance")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -90,7 +90,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }),
   );
   const creditBalance = profileResult.data?.credit_balance ?? 0;
-  const username = profileResult.data?.username ?? user.email ?? "Neighbor";
+  const name = profileResult.data?.name ?? user.email ?? "Neighbor";
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
@@ -110,7 +110,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              Signed in as {username}
+              Signed in as {name}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">

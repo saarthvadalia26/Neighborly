@@ -91,7 +91,7 @@ export default async function PostDetailPage({
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, username")
+        .select("id, name")
         .eq("id", post.author_id)
         .maybeSingle(),
       supabase
@@ -109,12 +109,12 @@ export default async function PostDetailPage({
     ),
   );
   const { data: messageProfiles } = profileIds.length
-    ? await supabase.from("profiles").select("id, username").in("id", profileIds)
+    ? await supabase.from("profiles").select("id, name").in("id", profileIds)
     : { data: [] };
-  const usernameById = new Map(
-    (messageProfiles ?? []).map((profile) => [profile.id, profile.username]),
+  const nameById = new Map(
+    (messageProfiles ?? []).map((profile) => [profile.id, profile.name]),
   );
-  const authorUsername = author?.username ?? usernameById.get(post.author_id) ?? "Neighbor";
+  const authorName = author?.name ?? nameById.get(post.author_id) ?? "Neighbor";
   const isAuthor = user.id === post.author_id;
   const chatParticipants: ChatParticipant[] = isAuthor
     ? Array.from(
@@ -125,9 +125,9 @@ export default async function PostDetailPage({
         ),
       ).map((profileId) => ({
         id: profileId,
-        username: usernameById.get(profileId) ?? "Neighbor",
+        name: nameById.get(profileId) ?? "Neighbor",
       }))
-    : [{ id: post.author_id, username: authorUsername }];
+    : [{ id: post.author_id, name: authorName }];
   const chatMessages: ChatMessage[] = (messages ?? []).map((message) => ({
     id: message.id,
     postId: message.post_id,
@@ -135,10 +135,10 @@ export default async function PostDetailPage({
     receiverId: message.receiver_id,
     content: message.content,
     createdAt: message.created_at,
-    senderUsername:
+    senderName:
       message.sender_id === user.id
         ? "You"
-        : usernameById.get(message.sender_id) ?? "Neighbor",
+        : nameById.get(message.sender_id) ?? "Neighbor",
   }));
   const creditValue = post.credit_value ?? 1;
   const isCompleted = post.status === "completed";
@@ -188,7 +188,7 @@ export default async function PostDetailPage({
               </div>
               <CardTitle className="text-2xl">{post.title}</CardTitle>
               <CardDescription>
-                Posted by {authorUsername} on {formatPostDate(post.created_at)}
+                Posted by {authorName} on {formatPostDate(post.created_at)}
               </CardDescription>
             </div>
             <Badge variant="secondary" className="h-8 gap-1.5 px-3">
@@ -220,7 +220,7 @@ export default async function PostDetailPage({
                   postId={post.id}
                   postType="offer"
                   receiverId={post.author_id}
-                  receiverUsername={authorUsername}
+                  receiverName={authorName}
                   amount={creditValue}
                 />
               ) : (
@@ -249,7 +249,7 @@ export default async function PostDetailPage({
         <PostChat
           postId={post.id}
           authorId={post.author_id}
-          authorUsername={authorUsername}
+          authorName={authorName}
           currentUserId={user.id}
           initialMessages={chatMessages}
           isThreadClosed={isCompleted}

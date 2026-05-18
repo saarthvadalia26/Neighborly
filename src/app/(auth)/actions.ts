@@ -53,19 +53,19 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const email = readString(formData, "email");
-  const username = readString(formData, "username").toLowerCase();
+  const name = readString(formData, "name");
   const passwordValue = formData.get("password");
   const password = typeof passwordValue === "string" ? passwordValue : "";
 
-  if (!email || !username || !password) {
+  if (!email || !name || !password) {
     redirectWithMessage("/signup", {
-      error: "Email, username, and password are required.",
+      error: "Name, email, and password are required.",
     });
   }
 
-  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+  if (name.length < 2 || name.length > 60) {
     redirectWithMessage("/signup", {
-      error: "Use 3-24 lowercase letters, numbers, or underscores.",
+      error: "Name must be between 2 and 60 characters.",
     });
   }
 
@@ -81,7 +81,7 @@ export async function signup(formData: FormData) {
     password,
     options: {
       data: {
-        username,
+        name,
       },
     },
   });

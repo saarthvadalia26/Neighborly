@@ -23,18 +23,18 @@ export type ChatMessage = {
   receiverId: string;
   content: string;
   createdAt: string | null;
-  senderUsername: string;
+  senderName: string;
 };
 
 export type ChatParticipant = {
   id: string;
-  username: string;
+  name: string;
 };
 
 type PostChatProps = {
   postId: string;
   authorId: string;
-  authorUsername: string;
+  authorName: string;
   currentUserId: string;
   initialMessages: ChatMessage[];
   isAuthor: boolean;
@@ -53,7 +53,7 @@ type MessageInsertPayload = {
 
 type MessageNotification = Pick<
   ChatMessage,
-  "id" | "senderId" | "senderUsername" | "content"
+  "id" | "senderId" | "senderName" | "content"
 >;
 
 const MESSAGE_REFRESH_INTERVAL_MS = 3000;
@@ -62,7 +62,7 @@ const MESSAGE_NOTIFICATION_VISIBLE_MS = 5500;
 export function PostChat({
   postId,
   authorId,
-  authorUsername,
+  authorName,
   currentUserId,
   initialMessages,
   isAuthor,
@@ -84,9 +84,9 @@ export function PostChat({
   const [messageNotification, setMessageNotification] =
     useState<MessageNotification | null>(null);
   const activeReceiverId = isAuthor ? selectedParticipantId : authorId;
-  const activeReceiverUsername =
+  const activeReceiverName =
     chatParticipants.find((participant) => participant.id === activeReceiverId)
-      ?.username ?? authorUsername;
+      ?.name ?? authorName;
   const visibleMessages = messages.filter((message) => {
     if (isAuthor) {
       return (
@@ -117,20 +117,20 @@ export function PostChat({
           .concat([authorId, currentUserId]),
       ),
     );
-    const usernameById = new Map<string, string>([
-      [authorId, authorUsername],
+    const nameById = new Map<string, string>([
+      [authorId, authorName],
       [currentUserId, "You"],
     ]);
 
     if (profileIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, username")
+        .select("id, name")
         .in("id", profileIds);
 
       for (const profile of profiles ?? []) {
-        if (profile.username) {
-          usernameById.set(profile.id, profile.username);
+        if (profile.name) {
+          nameById.set(profile.id, profile.name);
         }
       }
     }
@@ -142,10 +142,10 @@ export function PostChat({
       receiverId: message.receiver_id,
       content: message.content,
       createdAt: message.created_at,
-      senderUsername:
+      senderName:
         message.sender_id === currentUserId
           ? "You"
-          : usernameById.get(message.sender_id) ?? "Neighbor",
+          : nameById.get(message.sender_id) ?? "Neighbor",
     }));
     const newIncomingMessages = nextMessages.filter(
       (message) =>
@@ -166,7 +166,7 @@ export function PostChat({
       setMessageNotification({
         id: latestIncomingMessage.id,
         senderId: latestIncomingMessage.senderId,
-        senderUsername: latestIncomingMessage.senderUsername,
+        senderName: latestIncomingMessage.senderName,
         content: latestIncomingMessage.content,
       });
     }
@@ -180,7 +180,7 @@ export function PostChat({
         ),
       ).map((profileId) => ({
         id: profileId,
-        username: usernameById.get(profileId) ?? "Neighbor",
+        name: nameById.get(profileId) ?? "Neighbor",
       }));
 
       setChatParticipants(nextParticipants);
@@ -191,7 +191,7 @@ export function PostChat({
     }
   }, [
     authorId,
-    authorUsername,
+    authorName,
     currentUserId,
     isAuthor,
     postId,
@@ -292,7 +292,7 @@ export function PostChat({
           ...currentMessages,
           normalizeInsertedMessage(data, {
             authorId,
-            authorUsername,
+            authorName,
             currentUserId,
             participants: chatParticipants,
           }),
@@ -328,7 +328,7 @@ export function PostChat({
                 New message
               </div>
               <div className="truncate text-sm font-medium">
-                {messageNotification.senderUsername}
+                {messageNotification.senderName}
               </div>
               <p className="line-clamp-2 text-sm text-muted-foreground">
                 {messageNotification.content}
@@ -375,7 +375,7 @@ export function PostChat({
               }
               onClick={() => setSelectedParticipantId(participant.id)}
             >
-              {participant.username}
+              {participant.name}
             </Button>
           ))}
         </div>
@@ -399,7 +399,7 @@ export function PostChat({
                   }
                 >
                   <div className="mb-1 text-xs font-medium opacity-80">
-                    {isMine ? "You" : message.senderUsername}
+                    {isMine ? "You" : message.senderName}
                   </div>
                   <p className="text-sm leading-6">{message.content}</p>
                   <div className="mt-1 text-xs opacity-70">
@@ -440,7 +440,7 @@ export function PostChat({
           <Input
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            placeholder={`Message ${activeReceiverUsername}`}
+            placeholder={`Message ${activeReceiverName}`}
             maxLength={1000}
             disabled={isSending}
           />
@@ -473,15 +473,15 @@ function normalizeInsertedMessage(
   message: MessageInsertPayload,
   context: {
     authorId: string;
-    authorUsername: string;
+    authorName: string;
     currentUserId: string;
     participants: ChatParticipant[];
   },
 ): ChatMessage {
-  const participantUsername =
+  const participantName =
     context.participants.find(
       (participant) => participant.id === message.sender_id,
-    )?.username ?? "Neighbor";
+    )?.name ?? "Neighbor";
 
   return {
     id: message.id,
@@ -490,12 +490,12 @@ function normalizeInsertedMessage(
     receiverId: message.receiver_id,
     content: message.content,
     createdAt: message.created_at,
-    senderUsername:
+    senderName:
       message.sender_id === context.currentUserId
         ? "You"
         : message.sender_id === context.authorId
-          ? context.authorUsername
-          : participantUsername,
+          ? context.authorName
+          : participantName,
   };
 }
 

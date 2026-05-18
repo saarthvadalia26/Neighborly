@@ -52,7 +52,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, credit_balance")
+    .select("name, credit_balance")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -76,7 +76,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         <CardHeader>
           <CardTitle>Account</CardTitle>
           <CardDescription>
-            Signed in as {profile?.username ?? user.email ?? "Neighbor"} with{" "}
+            Signed in as {profile?.name ?? user.email ?? "Neighbor"} with{" "}
             {profile?.credit_balance ?? 0} Credits.
           </CardDescription>
         </CardHeader>

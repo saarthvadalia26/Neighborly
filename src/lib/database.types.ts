@@ -12,7 +12,7 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
-          username: string;
+          name: string;
           avatar_url: string | null;
           credit_balance: number | null;
           community_id: string | null;
@@ -22,7 +22,7 @@ export type Database = {
         };
         Insert: {
           id: string;
-          username: string;
+          name: string;
           avatar_url?: string | null;
           credit_balance?: number | null;
           community_id?: string | null;
@@ -32,7 +32,7 @@ export type Database = {
         };
         Update: {
           id?: string;
-          username?: string;
+          name?: string;
           avatar_url?: string | null;
           credit_balance?: number | null;
           community_id?: string | null;

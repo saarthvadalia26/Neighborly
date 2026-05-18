@@ -17,13 +17,13 @@ type CompletionPaymentFormProps = {
 } & (
   | {
       receiverId: string;
-      receiverUsername: string;
+      receiverName: string;
       recipients?: never;
     }
   | {
       receiverId?: never;
-      receiverUsername?: never;
-      recipients: { id: string; username: string }[];
+      receiverName?: never;
+      recipients: { id: string; name: string }[];
     }
 );
 
@@ -31,7 +31,7 @@ export function CompletionPaymentForm({
   postId,
   postType,
   receiverId,
-  receiverUsername,
+  receiverName,
   recipients,
   amount,
 }: CompletionPaymentFormProps) {
@@ -43,10 +43,10 @@ export function CompletionPaymentForm({
   );
   const [agreedAmount, setAgreedAmount] = useState(amount);
   const [isConfirmed, setIsConfirmed] = useState(false);
-  const selectedReceiverUsername =
-    receiverUsername ??
+  const selectedReceiverName =
+    receiverName ??
     recipients?.find((recipient) => recipient.id === selectedReceiverId)
-      ?.username ??
+      ?.name ??
     "this neighbor";
 
   if (postType === "need" && (!recipients || recipients.length === 0)) {
@@ -75,7 +75,7 @@ export function CompletionPaymentForm({
           >
             {recipients.map((recipient) => (
               <option key={recipient.id} value={recipient.id}>
-                {recipient.username}
+                {recipient.name}
               </option>
             ))}
           </select>
@@ -118,14 +118,14 @@ export function CompletionPaymentForm({
         />
         <span>
           I confirm the task is completed and I am ready to pay {agreedAmount}{" "}
-          Credits to {selectedReceiverUsername}.
+          Credits to {selectedReceiverName}.
         </span>
       </Label>
 
       <PaymentSubmitButton
         amount={agreedAmount}
         disabled={!isConfirmed || !selectedReceiverId}
-        receiverUsername={selectedReceiverUsername}
+        receiverName={selectedReceiverName}
       />
     </form>
   );
@@ -134,16 +134,16 @@ export function CompletionPaymentForm({
 function PaymentSubmitButton({
   amount,
   disabled,
-  receiverUsername,
+  receiverName,
 }: {
   amount: number;
   disabled: boolean;
-  receiverUsername: string;
+  receiverName: string;
 }) {
   const { pending } = useFormStatus();
   const buttonLabel = pending
     ? `Paying ${amount} Credits...`
-    : `Pay ${amount} Credits to ${receiverUsername}`;
+    : `Pay ${amount} Credits to ${receiverName}`;
 
   return (
     <Button

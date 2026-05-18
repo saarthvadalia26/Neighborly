@@ -2,7 +2,7 @@ create extension if not exists "uuid-ossp";
 
 create table if not exists public.profiles (
   id uuid references auth.users(id) on delete cascade primary key,
-  username text unique not null,
+  name text not null,
   avatar_url text,
   credit_balance integer default 5,
   community_id text,
@@ -48,6 +48,61 @@ begin
     alter table public.profiles add column credit_balance integer default 5;
   end if;
 end $$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'profiles'
+      and column_name = 'username'
+  ) and not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'profiles'
+      and column_name = 'name'
+  ) then
+    alter table public.profiles rename column username to name;
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'profiles'
+      and column_name = 'name'
+  ) then
+    alter table public.profiles add column name text;
+  end if;
+end $$;
+
+alter table public.profiles
+  drop constraint if exists profiles_username_key;
+
+alter table public.profiles
+  drop constraint if exists profiles_name_key;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'profiles'
+      and column_name = 'username'
+  ) then
+    update public.profiles
+    set name = coalesce(nullif(name, ''), nullif(username, ''), 'Neighbor');
+  else
+    update public.profiles
+    set name = coalesce(nullif(name, ''), 'Neighbor');
+  end if;
+end $$;
+
+alter table public.profiles
+  alter column name set not null;
 
 alter table public.profiles
   alter column credit_balance set default 5;

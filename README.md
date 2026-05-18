@@ -15,7 +15,7 @@ Built with **Next.js**, **Supabase**, **TypeScript**, **Tailwind CSS**, and
 - Credit-based exchange model: new users start with 5 Credits
 - Neighborhood feed for open offers and needs
 - Post creation dialog for authenticated users
-- Auto-generated profiles from signup metadata
+- Auto-generated profiles with display names from signup metadata
 - Supabase SSR helpers for browser, server, and proxy session refresh
 
 ## Getting Started
@@ -68,6 +68,15 @@ supabase/profile-trigger.sql
 The Phase 2 SQL migrates older `karma_balance` and `karma_value` columns to
 `credit_balance` and `credit_value`, adds the 1-5 Credit constraint for posts,
 and installs the RLS policies needed by the app.
+
+To replace profile `username` with display `name`, run:
+
+```text
+supabase/rename-profile-username-to-name.sql
+```
+
+This preserves existing profile values and updates the signup trigger to write
+`name` for new users.
 
 For messaging and Credit transfers, also run:
 

@@ -36,12 +36,13 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <form action={signup} className="grid gap-4">
             <AuthFormMessage error={params.error} />
             <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="username"
-                name="username"
-                autoComplete="username"
-                pattern="[a-z0-9_]{3,24}"
+                id="name"
+                name="name"
+                autoComplete="name"
+                minLength={2}
+                maxLength={60}
                 required
               />
             </div>

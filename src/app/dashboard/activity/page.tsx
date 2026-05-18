@@ -62,7 +62,7 @@ export default async function ActivityPage() {
   const [profileResult, postsResult, transactionsResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("username, credit_balance")
+      .select("name, credit_balance")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -100,7 +100,7 @@ export default async function ActivityPage() {
       relatedProfileIds.length > 0
         ? supabase
             .from("profiles")
-            .select("id, username")
+            .select("id, name")
             .in("id", relatedProfileIds)
         : Promise.resolve({ data: [] }),
     ]);
@@ -110,8 +110,8 @@ export default async function ActivityPage() {
       { title: post.title, type: post.type },
     ]),
   );
-  const usernameById = new Map(
-    (relatedProfiles ?? []).map((profile) => [profile.id, profile.username]),
+  const nameById = new Map(
+    (relatedProfiles ?? []).map((profile) => [profile.id, profile.name]),
   );
   const profile = profileResult.data;
   const posts = (postsResult.data ?? []) as ActivityPost[];
@@ -132,7 +132,7 @@ export default async function ActivityPage() {
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Signed in as {profile?.username ?? user.email ?? "Neighbor"}
+          Signed in as {profile?.name ?? user.email ?? "Neighbor"}
         </p>
       </header>
 
@@ -223,8 +223,7 @@ export default async function ActivityPage() {
                 const otherProfileId = isEarned
                   ? transaction.sender_id
                   : transaction.receiver_id;
-                const otherUsername =
-                  usernameById.get(otherProfileId) ?? "Neighbor";
+                const otherName = nameById.get(otherProfileId) ?? "Neighbor";
                 const post = postById.get(transaction.post_id);
 
                 return (
@@ -239,7 +238,7 @@ export default async function ActivityPage() {
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {isEarned ? "Earned from" : "Paid to"}{" "}
-                          {otherUsername} on {formatDate(transaction.created_at)}
+                          {otherName} on {formatDate(transaction.created_at)}
                         </p>
                       </div>
                       <Badge
