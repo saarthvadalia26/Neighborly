@@ -45,7 +45,7 @@ type FeedPostRow = {
   created_at: string | null;
 };
 
-const POST_REFRESH_INTERVAL_MS = 30000;
+const POST_REFRESH_INTERVAL_MS = 5000;
 
 const feedNouns: Record<TypeFilter, string> = {
   all: "swaps",
