@@ -41,8 +41,15 @@ export function CompletionPaymentForm({
   const [selectedReceiverId, setSelectedReceiverId] = useState(
     receiverId ?? recipients?.[0]?.id ?? "",
   );
-  const [agreedAmount, setAgreedAmount] = useState(amount);
+  const [agreedAmountInput, setAgreedAmountInput] = useState(String(amount));
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const isAgreedAmountValid = /^[1-5]$/.test(agreedAmountInput.trim());
+  const agreedAmountLabel = isAgreedAmountValid
+    ? String(Number(agreedAmountInput))
+    : "";
+  const confirmationAmountText = isAgreedAmountValid
+    ? `${agreedAmountLabel} Credits`
+    : "the agreed amount";
   const selectedReceiverName =
     receiverName ??
     recipients?.find((recipient) => recipient.id === selectedReceiverId)
@@ -90,10 +97,10 @@ export function CompletionPaymentForm({
           type="number"
           min={1}
           max={5}
-          value={agreedAmount}
-          onChange={(event) =>
-            setAgreedAmount(Number.parseInt(event.target.value, 10) || 1)
-          }
+          step={1}
+          inputMode="numeric"
+          value={agreedAmountInput}
+          onChange={(event) => setAgreedAmountInput(event.target.value)}
           required
         />
         <p className="text-sm text-muted-foreground">
@@ -117,14 +124,14 @@ export function CompletionPaymentForm({
           className="mt-1 size-4 accent-primary"
         />
         <span>
-          I confirm the task is completed and I am ready to pay {agreedAmount}{" "}
-          Credits to {selectedReceiverName}.
+          I confirm the task is completed and I am ready to pay{" "}
+          {confirmationAmountText} to {selectedReceiverName}.
         </span>
       </Label>
 
       <PaymentSubmitButton
-        amount={agreedAmount}
-        disabled={!isConfirmed || !selectedReceiverId}
+        amountLabel={agreedAmountLabel}
+        disabled={!isConfirmed || !selectedReceiverId || !isAgreedAmountValid}
         receiverName={selectedReceiverName}
       />
     </form>
@@ -132,18 +139,21 @@ export function CompletionPaymentForm({
 }
 
 function PaymentSubmitButton({
-  amount,
+  amountLabel,
   disabled,
   receiverName,
 }: {
-  amount: number;
+  amountLabel: string;
   disabled: boolean;
   receiverName: string;
 }) {
   const { pending } = useFormStatus();
-  const buttonLabel = pending
-    ? `Paying ${amount} Credits...`
-    : `Pay ${amount} Credits to ${receiverName}`;
+  const buttonLabel =
+    !amountLabel
+      ? "Enter 1-5 Credits"
+      : pending
+        ? `Paying ${amountLabel} Credits...`
+        : `Pay ${amountLabel} Credits to ${receiverName}`;
 
   return (
     <Button

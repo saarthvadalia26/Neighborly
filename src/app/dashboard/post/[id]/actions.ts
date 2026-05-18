@@ -133,13 +133,15 @@ export async function updatePostStatus(formData: FormData) {
 export async function transferCredits(formData: FormData) {
   const postId = readString(formData, "post_id");
   const receiverId = readString(formData, "receiver_id");
-  const amount = Number.parseInt(readString(formData, "amount"), 10);
+  const amountValue = readString(formData, "amount");
+  const amount = Number(amountValue);
   const taskCompletedConfirmed =
     readString(formData, "task_completed_confirmed") === "yes";
 
   if (
     !postId ||
     !receiverId ||
+    !/^[1-5]$/.test(amountValue) ||
     !Number.isInteger(amount) ||
     amount < 1 ||
     amount > 5
