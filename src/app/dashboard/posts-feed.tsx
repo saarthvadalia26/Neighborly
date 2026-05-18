@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coins, LoaderCircle, Search } from "lucide-react";
+import { Coins, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,7 +45,7 @@ type FeedPostRow = {
   created_at: string | null;
 };
 
-const POST_REFRESH_INTERVAL_MS = 5000;
+const POST_REFRESH_INTERVAL_MS = 30000;
 
 const feedNouns: Record<TypeFilter, string> = {
   all: "swaps",
@@ -67,25 +67,18 @@ export function PostsFeed({ posts }: PostsFeedProps) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshPosts = useCallback(async () => {
-    setIsRefreshing(true);
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, type, title, description, credit_value, status, created_at")
+      .in("status", ["open", "paused", "completed"])
+      .order("created_at", { ascending: false });
 
-    try {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("id, type, title, description, credit_value, status, created_at")
-        .in("status", ["open", "paused", "completed"])
-        .order("created_at", { ascending: false });
-
-      if (error || !data) {
-        return;
-      }
-
-      setLivePosts(data.map(mapFeedPost));
-    } finally {
-      setIsRefreshing(false);
+    if (error || !data) {
+      return;
     }
+
+    setLivePosts(data.map(mapFeedPost));
   }, [supabase]);
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -147,12 +140,6 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             <span>
               {filteredPosts.length} {feedNouns[typeFilter]} shown
             </span>
-            {isRefreshing ? (
-              <span className="inline-flex items-center gap-1">
-                <LoaderCircle className="size-3.5 animate-spin" />
-                Updating
-              </span>
-            ) : null}
           </div>
         </div>
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto] xl:items-center">
