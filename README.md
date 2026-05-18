@@ -94,6 +94,13 @@ value, run:
 supabase/negotiated-credit-transfers.sql
 ```
 
+If you see `Transfer amount must match the post Credit value`, your Supabase
+RPC is still on the older version. Run:
+
+```text
+supabase/fix-negotiated-transfer-amounts.sql
+```
+
 For hard account deletion, add `SUPABASE_SERVICE_ROLE_KEY` in Vercel and run:
 
 ```text
