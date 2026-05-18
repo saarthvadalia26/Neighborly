@@ -4,6 +4,16 @@ import { useFormStatus } from "react-dom";
 import { LoaderCircle, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import { updatePostStatus } from "./actions";
 
@@ -31,11 +41,11 @@ export function PostOwnerControls({ postId, status }: PostOwnerControlsProps) {
       </div>
       <div className="flex flex-wrap gap-2">
         {canPause ? (
-          <form action={updatePostStatus}>
-            <input type="hidden" name="post_id" value={postId} />
-            <input type="hidden" name="status" value="paused" />
-            <PostStatusSubmitButton action="pause" />
-          </form>
+          <PostStatusConfirmation
+            action="pause"
+            postId={postId}
+            nextStatus="paused"
+          />
         ) : null}
 
         {canResume ? (
@@ -46,13 +56,69 @@ export function PostOwnerControls({ postId, status }: PostOwnerControlsProps) {
           </form>
         ) : null}
 
-        <form action={updatePostStatus}>
-          <input type="hidden" name="post_id" value={postId} />
-          <input type="hidden" name="status" value="canceled" />
-          <PostStatusSubmitButton action="remove" />
-        </form>
+        <PostStatusConfirmation
+          action="remove"
+          postId={postId}
+          nextStatus="canceled"
+        />
       </div>
     </div>
+  );
+}
+
+function PostStatusConfirmation({
+  action,
+  postId,
+  nextStatus,
+}: {
+  action: "pause" | "remove";
+  postId: string;
+  nextStatus: "paused" | "canceled";
+}) {
+  const isRemove = action === "remove";
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant={isRemove ? "destructive" : "outline"}
+          className="gap-2"
+        >
+          {isRemove ? (
+            <Trash2 className="size-4" />
+          ) : (
+            <PauseCircle className="size-4" />
+          )}
+          {isRemove ? "Remove post" : "Pause"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {isRemove ? "Remove this post?" : "Pause this post?"}
+          </DialogTitle>
+          <DialogDescription>
+            {isRemove
+              ? "This will cancel the post and remove it from active marketplace browsing. People who already participated can still see related activity."
+              : "This will hide the post from neighbors until you resume it."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form action={updatePostStatus}>
+          <input type="hidden" name="post_id" value={postId} />
+          <input type="hidden" name="status" value={nextStatus} />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+            <PostStatusSubmitButton action={action} />
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
