@@ -16,6 +16,8 @@ function redirectWithTransferMessage(
   params: {
     action_error?: string;
     action_message?: string;
+    review_error?: string;
+    reviewed?: string;
     transfer_error?: string;
     transferred?: string;
   },
@@ -28,6 +30,14 @@ function redirectWithTransferMessage(
 
   if (params.action_message) {
     searchParams.set("action_message", params.action_message);
+  }
+
+  if (params.review_error) {
+    searchParams.set("review_error", params.review_error);
+  }
+
+  if (params.reviewed) {
+    searchParams.set("reviewed", params.reviewed);
   }
 
   if (params.transfer_error) {
@@ -227,5 +237,93 @@ export async function transferCredits(formData: FormData) {
       post?.type === "offer"
         ? `${amount} Credits paid. This offer stays available for other neighbors.`
         : `Need completed. ${amount} Credits paid to the neighbor who helped.`,
+  });
+}
+
+export async function createReview(formData: FormData) {
+  const postId = readString(formData, "post_id");
+  const transactionId = readString(formData, "transaction_id");
+  const ratingValue = readString(formData, "rating");
+  const rating = Number(ratingValue);
+  const comment = readString(formData, "comment");
+
+  if (
+    !postId ||
+    !transactionId ||
+    !/^[1-5]$/.test(ratingValue) ||
+    !Number.isInteger(rating)
+  ) {
+    redirectWithTransferMessage(postId || "", {
+      review_error: "Choose a rating from 1 to 5 stars.",
+    });
+  }
+
+  if (comment.length > 500) {
+    redirectWithTransferMessage(postId, {
+      review_error: "Reviews must be 500 characters or less.",
+    });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: transaction, error: transactionError } = await supabase
+    .from("transactions")
+    .select("id, post_id, sender_id, receiver_id, status")
+    .eq("id", transactionId)
+    .maybeSingle();
+
+  if (transactionError || !transaction) {
+    redirectWithTransferMessage(postId, {
+      review_error: transactionError?.message ?? "Transaction not found.",
+    });
+  }
+
+  if (transaction.post_id !== postId) {
+    redirectWithTransferMessage(postId, {
+      review_error: "This review does not match the current post.",
+    });
+  }
+
+  if (transaction.sender_id !== user.id) {
+    redirectWithTransferMessage(postId, {
+      review_error: "Only the person who paid Credits can review this swap.",
+    });
+  }
+
+  if (transaction.status !== "completed") {
+    redirectWithTransferMessage(postId, {
+      review_error: "Reviews can only be posted after payment is completed.",
+    });
+  }
+
+  const { error: reviewError } = await supabase.from("reviews").insert({
+    transaction_id: transaction.id,
+    post_id: transaction.post_id,
+    reviewer_id: user.id,
+    reviewee_id: transaction.receiver_id,
+    rating,
+    comment: comment || null,
+  });
+
+  if (reviewError) {
+    redirectWithTransferMessage(postId, {
+      review_error: reviewError.message.includes("duplicate")
+        ? "You already reviewed this completed swap."
+        : reviewError.message,
+    });
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/post/${postId}`);
+
+  redirectWithTransferMessage(postId, {
+    reviewed: "Review posted. Thanks for helping neighbors choose confidently.",
   });
 }

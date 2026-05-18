@@ -195,6 +195,64 @@ export type Database = {
           },
         ];
       };
+      reviews: {
+        Row: {
+          id: string;
+          transaction_id: string;
+          post_id: string;
+          reviewer_id: string;
+          reviewee_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          transaction_id: string;
+          post_id: string;
+          reviewer_id: string;
+          reviewee_id: string;
+          rating: number;
+          comment?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          transaction_id?: string;
+          post_id?: string;
+          reviewer_id?: string;
+          reviewee_id?: string;
+          rating?: number;
+          comment?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_transaction_id_fkey";
+            columns: ["transaction_id"];
+            referencedRelation: "transactions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_post_id_fkey";
+            columns: ["post_id"];
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_reviewer_id_fkey";
+            columns: ["reviewer_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_reviewee_id_fkey";
+            columns: ["reviewee_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {

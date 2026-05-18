@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coins, Search } from "lucide-react";
+import { Coins, Search, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,16 +16,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { buildReviewStatsByProfile, formatRating } from "@/lib/reviews";
 import { createClient } from "@/lib/supabase/browser";
 
 export type FeedPost = {
   id: string;
+  authorId: string;
   type: "offer" | "need";
   title: string;
   description: string;
   creditValue: number;
   status: "open" | "paused" | "in_progress" | "completed" | "canceled";
   createdAt: string | null;
+  authorRatingAverage: number | null;
+  authorReviewCount: number;
 };
 
 type TypeFilter = "all" | "offer" | "need";
@@ -37,6 +41,7 @@ type PostsFeedProps = {
 
 type FeedPostRow = {
   id: string;
+  author_id: string;
   type: "offer" | "need";
   title: string;
   description: string;
@@ -70,7 +75,9 @@ export function PostsFeed({ posts }: PostsFeedProps) {
   const refreshPosts = useCallback(async () => {
     const { data, error } = await supabase
       .from("posts")
-      .select("id, type, title, description, credit_value, status, created_at")
+      .select(
+        "id, author_id, type, title, description, credit_value, status, created_at",
+      )
       .in("status", ["open", "paused", "completed"])
       .order("created_at", { ascending: false });
 
@@ -78,7 +85,18 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       return;
     }
 
-    setLivePosts(data.map(mapFeedPost));
+    const authorIds = Array.from(new Set(data.map((post) => post.author_id)));
+    const { data: reviews } = authorIds.length
+      ? await supabase
+          .from("reviews")
+          .select("reviewee_id, rating")
+          .in("reviewee_id", authorIds)
+      : { data: [] };
+    const reviewStatsByProfile = buildReviewStatsByProfile(reviews ?? []);
+
+    setLivePosts(
+      data.map((post) => mapFeedPost(post, reviewStatsByProfile)),
+    );
   }, [supabase]);
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -220,8 +238,12 @@ export function PostsFeed({ posts }: PostsFeedProps) {
                     </div>
                   </CardAction>
                 </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Posted {formatPostDate(post.createdAt)}
+                <CardContent className="grid gap-1 text-sm text-muted-foreground">
+                  <span>Posted {formatPostDate(post.createdAt)}</span>
+                  <AuthorRating
+                    average={post.authorRatingAverage}
+                    count={post.authorReviewCount}
+                  />
                 </CardContent>
                 <CardFooter className="justify-between">
                   <span className="text-sm text-muted-foreground">Credit value</span>
@@ -276,15 +298,45 @@ function EmptyFeedState({
   );
 }
 
-function mapFeedPost(post: FeedPostRow): FeedPost {
+function AuthorRating({
+  average,
+  count,
+}: {
+  average: number | null;
+  count: number;
+}) {
+  if (!average || count === 0) {
+    return <span>No reviews yet</span>;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Star className="size-3.5 fill-foreground text-foreground" />
+      {formatRating(average)} from {count} {count === 1 ? "review" : "reviews"}
+    </span>
+  );
+}
+
+function mapFeedPost(
+  post: FeedPostRow,
+  reviewStatsByProfile = new Map<
+    string,
+    { average: number | null; count: number }
+  >(),
+): FeedPost {
+  const stats = reviewStatsByProfile.get(post.author_id);
+
   return {
     id: post.id,
+    authorId: post.author_id,
     type: post.type,
     title: post.title,
     description: post.description,
     creditValue: post.credit_value ?? 1,
     status: normalizePostStatus(post.status),
     createdAt: post.created_at,
+    authorRatingAverage: stats?.average ?? null,
+    authorReviewCount: stats?.count ?? 0,
   };
 }
 

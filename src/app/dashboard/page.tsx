@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToastNotice } from "@/components/toast-notice";
 import type { CreditPricingPost } from "@/lib/credit-guidance";
+import { buildReviewStatsByProfile } from "@/lib/reviews";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -68,19 +69,37 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .maybeSingle(),
     supabase
       .from("posts")
-      .select("id, type, title, description, credit_value, status, created_at")
+      .select(
+        "id, author_id, type, title, description, credit_value, status, created_at",
+      )
       .in("status", ["open", "paused", "completed"])
       .order("created_at", { ascending: false }),
   ]);
+  const authorIds = Array.from(
+    new Set((postsResult.data ?? []).map((post) => post.author_id)),
+  );
+  const { data: postAuthorReviews } = authorIds.length
+    ? await supabase
+        .from("reviews")
+        .select("reviewee_id, rating")
+        .in("reviewee_id", authorIds)
+    : { data: [] };
+  const reviewStatsByProfile = buildReviewStatsByProfile(
+    postAuthorReviews ?? [],
+  );
 
   const posts: FeedPost[] = (postsResult.data ?? []).map((post) => ({
     id: post.id,
+    authorId: post.author_id,
     type: post.type,
     title: post.title,
     description: post.description,
     creditValue: post.credit_value ?? 1,
     status: post.status ?? "open",
     createdAt: post.created_at,
+    authorRatingAverage:
+      reviewStatsByProfile.get(post.author_id)?.average ?? null,
+    authorReviewCount: reviewStatsByProfile.get(post.author_id)?.count ?? 0,
   }));
   const pricingPosts: CreditPricingPost[] = (postsResult.data ?? []).map(
     (post) => ({

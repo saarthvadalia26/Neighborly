@@ -101,6 +101,12 @@ RPC is still on the older version. Run:
 supabase/fix-negotiated-transfer-amounts.sql
 ```
 
+For ratings and written reviews after completed swaps, run:
+
+```text
+supabase/reviews.sql
+```
+
 For hard account deletion, add `SUPABASE_SERVICE_ROLE_KEY` in Vercel and run:
 
 ```text

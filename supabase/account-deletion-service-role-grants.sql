@@ -22,6 +22,13 @@ grant select, insert, update, delete
 on public.transactions
 to service_role;
 
+do $$
+begin
+  if to_regclass('public.reviews') is not null then
+    execute 'grant select, insert, update, delete on public.reviews to service_role';
+  end if;
+end $$;
+
 grant usage, select
 on all sequences in schema public
 to service_role;
