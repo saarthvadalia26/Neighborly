@@ -34,7 +34,7 @@ export function PostCreateDialog({
           New post
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create a swap post</DialogTitle>
           <DialogDescription>
@@ -42,8 +42,13 @@ export function PostCreateDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form action={createPost} className="grid gap-4">
-          <CreatePostFields pricingPosts={pricingPosts} />
+        <form
+          action={createPost}
+          className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-4"
+        >
+          <div className="-mx-1 grid min-h-0 gap-4 overflow-y-auto px-1 pr-2">
+            <CreatePostFields pricingPosts={pricingPosts} />
+          </div>
 
           <DialogFooter>
             <DialogClose asChild>
