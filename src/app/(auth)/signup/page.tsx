@@ -72,7 +72,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               pendingLabel="Creating account..."
             />
             <p className="text-center text-sm text-muted-foreground">
-              Already swapping?{" "}
+              Already have an account?{" "}
               <Link className="font-medium text-foreground underline" href="/login">
                 Log in
               </Link>
