@@ -34,7 +34,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="mx-auto grid w-full max-w-5xl gap-8">
           <header className="border-b pb-5">
             <p className="text-sm font-medium text-muted-foreground">
-              Community Swap
+              Neighborly
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">
               Neighborhood feed
@@ -117,7 +117,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="grid gap-1">
             <p className="text-sm font-medium text-muted-foreground">
-              Community Swap
+              Neighborly
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-semibold tracking-tight">

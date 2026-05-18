@@ -120,7 +120,7 @@ export default async function ActivityPage() {
     <ActivityShell>
       <header className="grid gap-2 border-b pb-5">
         <p className="text-sm font-medium text-muted-foreground">
-          Community Swap
+          Neighborly
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-semibold tracking-tight">

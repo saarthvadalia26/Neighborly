@@ -11,7 +11,7 @@ export default function Home() {
             Hyper-local barter powered by Credits
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            Community Swap
+            Neighborly
           </h1>
           <p className="mx-auto max-w-xl text-base leading-7 text-muted-foreground">
             Trade useful items, errands, lessons, repairs, and neighborly help

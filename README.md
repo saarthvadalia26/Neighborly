@@ -1,8 +1,8 @@
-# Community Swap
+# Neighborly
 
 > Hyper-local barter powered by Credits
 
-**Community Swap** is a neighborhood trading platform for exchanging useful
+**Neighborly** is a neighborhood trading platform for exchanging useful
 items, errands, lessons, repairs, and neighborly help without cash. Trades are
 priced in **Credits**, a simple balance that keeps swaps fair and reciprocal.
 

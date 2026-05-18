@@ -110,7 +110,7 @@ function SettingsShell({ children }: { children: React.ReactNode }) {
         </Button>
         <header className="grid gap-1 border-b pb-5">
           <p className="text-sm font-medium text-muted-foreground">
-            Community Swap
+            Neighborly
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
         </header>
