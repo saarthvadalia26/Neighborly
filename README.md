@@ -122,6 +122,16 @@ npm run dev
 
 Your app will be available at [http://localhost:3000](http://localhost:3000).
 
+## 🗺️ Roadmap & Upcoming Features
+
+We are actively working on making **Neighborly** even better. Here is what we are building next:
+
+- **📍 Map Integration & Geolocation:** View and explore local offers directly on an interactive map.
+- **📸 Image Uploads:** Attach images to your posts using Supabase Storage.
+- **🔔 Real-Time Notifications:** In-app alerts to keep you updated on your swaps, messages, and credit transfers.
+- **✨ Premium UI/UX:** Polished interfaces and smooth micro-animations for a high-end user experience.
+- **🏷️ Categories & Advanced Filtering:** Easily organize and discover posts through robust categorization.
+
 ## 📁 Project Structure
 
 ```text
