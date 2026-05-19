@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { Coins, LoaderCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -156,19 +157,21 @@ function PaymentSubmitButton({
         : `Pay ${amountLabel} Credits to ${receiverName}`;
 
   return (
-    <Button
-      type="submit"
-      disabled={disabled || pending}
-      aria-busy={pending}
-      aria-live="polite"
-      className="w-fit min-w-56 gap-2"
-    >
-      {pending ? (
-        <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-      ) : (
-        <Coins aria-hidden="true" className="size-4" />
-      )}
-      <span>{buttonLabel}</span>
-    </Button>
+    <motion.div whileTap={{ scale: 0.95 }} className="w-fit">
+      <Button
+        type="submit"
+        disabled={disabled || pending}
+        aria-busy={pending}
+        aria-live="polite"
+        className="w-full min-w-56 gap-2"
+      >
+        {pending ? (
+          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+        ) : (
+          <Coins aria-hidden="true" className="size-4" />
+        )}
+        <span>{buttonLabel}</span>
+      </Button>
+    </motion.div>
   );
 }

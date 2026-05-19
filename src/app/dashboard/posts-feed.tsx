@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Coins, Search, Star } from "lucide-react";
 
@@ -28,6 +29,23 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { buildReviewStatsByProfile, formatRating } from "@/lib/reviews";
 import { createClient } from "@/lib/supabase/browser";
+
+const MotionTabsTrigger = motion(TabsTrigger);
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+};
 
 export type FeedPost = {
   id: string;
@@ -234,10 +252,10 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             onValueChange={(value) => setStatusFilter(value as StatusFilter)}
           >
             <TabsList>
-              <TabsTrigger value="all">All statuses</TabsTrigger>
-              <TabsTrigger value="open">Available</TabsTrigger>
-              <TabsTrigger value="paused">Paused</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="all">All statuses</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="open">Available</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="paused">Paused</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="completed">Completed</MotionTabsTrigger>
             </TabsList>
           </Tabs>
           <Tabs
@@ -245,9 +263,9 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             onValueChange={(value) => setTypeFilter(value as TypeFilter)}
           >
             <TabsList>
-              <TabsTrigger value="all">All types</TabsTrigger>
-              <TabsTrigger value="offer">Offers</TabsTrigger>
-              <TabsTrigger value="need">Needs</TabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="all">All types</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="offer">Offers</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="need">Needs</MotionTabsTrigger>
             </TabsList>
           </Tabs>
           <Tabs
@@ -255,11 +273,11 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             onValueChange={handleCategoryChange}
           >
             <TabsList>
-              <TabsTrigger value="all">All Categories</TabsTrigger>
-              <TabsTrigger value="items">Items</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="errands">Errands</TabsTrigger>
-              <TabsTrigger value="other">Other</TabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="all">All Categories</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="items">Items</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="services">Services</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="errands">Errands</MotionTabsTrigger>
+              <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="other">Other</MotionTabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -278,11 +296,16 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       ) : null}
 
       {filteredPosts.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid gap-4 md:grid-cols-2"
+        >
           {filteredPosts.map((post) => (
             <PostCardLink key={post.id} post={post} />
           ))}
-        </div>
+        </motion.div>
       ) : (
         <EmptyFeedState
           hasAnyPosts={livePosts.length > 0}
@@ -295,11 +318,12 @@ export function PostsFeed({ posts }: PostsFeedProps) {
 
 const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
   return (
-    <Link
-      href={`/dashboard/post/${post.id}`}
-      className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-    >
-      <Card className="min-h-44 overflow-hidden transition-colors hover:bg-muted/30">
+    <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+      <Link
+        href={`/dashboard/post/${post.id}`}
+        className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <Card className="min-h-44 overflow-hidden transition-all hover:bg-muted/30 hover:shadow-md">
         {post.imageUrl && (
           <div className="relative h-48 w-full border-b bg-muted/50">
             <Image
@@ -347,7 +371,8 @@ const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
           </Badge>
         </CardFooter>
       </Card>
-    </Link>
+      </Link>
+    </motion.div>
   );
 });
 

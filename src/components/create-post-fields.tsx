@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { motion } from "framer-motion";
 import { Coins, LoaderCircle, Sparkles, Image as ImageIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -138,10 +139,12 @@ export function CreatePostSubmitButton({
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={pending} className={cn("gap-2", className)}>
-      {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
-      {pending ? "Creating..." : "Create post"}
-    </Button>
+    <motion.div whileTap={{ scale: 0.95 }} className={className}>
+      <Button type="submit" disabled={pending} className={cn("gap-2 w-full", className)}>
+        {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
+        {pending ? "Creating..." : "Create post"}
+      </Button>
+    </motion.div>
   );
 }
 
