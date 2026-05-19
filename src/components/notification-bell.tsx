@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, BellRing, Check, CheckCheck, Coins, MessageSquare, X } from "lucide-react";
 import Link from "next/link";
@@ -11,10 +11,18 @@ import type { Database } from "@/lib/database.types";
 
 type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 
-export function NotificationBell({ userId }: { userId: string }) {
-  const supabase = useRef(createClient()).current;
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+export function NotificationBell({
+  userId,
+  initialNotifications = [],
+}: {
+  userId: string;
+  initialNotifications?: Notification[];
+}) {
+  const supabase = useMemo(() => createClient(), []);
+  const [notifications, setNotifications] =
+    useState<Notification[]>(initialNotifications);
   const [open, setOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -68,6 +76,18 @@ export function NotificationBell({ userId }: { userId: string }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(Date.now());
+
+    updateCurrentTime();
+
+    const timer = window.setInterval(updateCurrentTime, 60000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
   // --- Mark single notification as read ---
   const markAsRead = useCallback(
     async (id: string) => {
@@ -100,15 +120,22 @@ export function NotificationBell({ userId }: { userId: string }) {
       <MessageSquare className="size-4 shrink-0 text-blue-500" />
     );
 
-  const timeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  };
+  const timeAgo = useCallback(
+    (dateStr: string) => {
+      const createdAt = new Date(dateStr).getTime();
+      const diff = (currentTime ?? createdAt) - createdAt;
+      const mins = Math.floor(diff / 60000);
+
+      if (mins < 1) return "just now";
+      if (mins < 60) return `${mins}m ago`;
+
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours}h ago`;
+
+      return `${Math.floor(hours / 24)}d ago`;
+    },
+    [currentTime],
+  );
 
   return (
     <div className="relative" ref={panelRef}>

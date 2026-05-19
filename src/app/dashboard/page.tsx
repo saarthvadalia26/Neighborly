@@ -152,7 +152,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <NotificationBell userId={user.id} />
+            <NotificationBell
+              userId={user.id}
+              initialNotifications={initialNotifications ?? []}
+            />
             <PostCreateDialog pricingPosts={pricingPosts} />
             <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
               <Link href="/dashboard/activity">

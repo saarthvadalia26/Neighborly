@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import {
   memo,
   useCallback,
@@ -89,9 +88,15 @@ type FeedPostRow = {
 const POST_REFRESH_INTERVAL_MS = 5000;
 
 const feedNouns: Record<TypeFilter, string> = {
-  all: "swaps",
+  all: "listings",
   offer: "offers",
-  need: "needs",
+  need: "requests",
+};
+
+const singularFeedNouns: Record<TypeFilter, string> = {
+  all: "listing",
+  offer: "offer",
+  need: "request",
 };
 
 const statusLabels: Record<FeedPost["status"], string> = {
@@ -233,11 +238,11 @@ export function PostsFeed({ posts }: PostsFeedProps) {
     <section className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Swaps</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Available nearby
+          </h2>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>
-              {filteredPosts.length} {feedNouns[typeFilter]} shown
-            </span>
+            <span>{formatFeedCount(filteredPosts.length, typeFilter)}</span>
           </div>
         </div>
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto_auto] xl:items-center">
@@ -290,7 +295,7 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       {activePostsCount === 0 && livePosts.length > 0 ? (
         <Card className="border-dashed bg-muted/20">
           <CardHeader>
-            <CardTitle>No active swaps right now</CardTitle>
+            <CardTitle>No active listings right now</CardTitle>
             <CardDescription>
               The marketplace only has paused or completed posts at the moment.
               Start a fresh need or offer when you are ready.
@@ -388,14 +393,14 @@ function EmptyFeedState({
       ? "No requests in your area yet"
       : typeFilter === "offer"
         ? "No offers in your area yet"
-        : "No active swaps in your area yet";
+        : "No active listings in your area yet";
   const description = hasAnyPosts
     ? "Try another search or change the filters to widen the marketplace."
     : typeFilter === "need"
       ? "Be the first to post a need and let nearby neighbors know how they can help."
       : typeFilter === "offer"
         ? "Be the first to offer a useful skill, tool, or errand to nearby neighbors."
-        : "Be the first to post a need or offer and get the neighborhood moving.";
+        : "Be the first to share a need or offer and get the neighborhood moving.";
 
   return (
     <Card className="bg-muted/20 text-center">
@@ -405,6 +410,13 @@ function EmptyFeedState({
       </CardHeader>
     </Card>
   );
+}
+
+function formatFeedCount(count: number, typeFilter: TypeFilter) {
+  const noun =
+    count === 1 ? singularFeedNouns[typeFilter] : feedNouns[typeFilter];
+
+  return `${count} ${noun} available`;
 }
 
 function AuthorRating({
