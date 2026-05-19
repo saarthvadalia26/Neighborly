@@ -155,5 +155,6 @@ Deploying Neighborly is quick and straightforward:
 <hr/>
 
 <p align="center">
-  Built with ❤️ for better, stronger, and more connected neighborhoods.
+  Built with ❤️ for better, stronger, and more connected neighborhoods.<br/><br/>
+  <a href="https://github.com/saarthvadalia26"><img src="https://img.shields.io/github/followers/saarthvadalia26?label=Follow%20%40saarthvadalia26&style=social" alt="GitHub Follow" /></a>
 </p>
