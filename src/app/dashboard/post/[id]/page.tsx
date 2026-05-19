@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Coins, Star } from "lucide-react";
 
@@ -80,7 +81,7 @@ export default async function PostDetailPage({
 
   const { data: post, error: postError } = await supabase
     .from("posts")
-    .select("id, author_id, type, title, description, credit_value, status, created_at")
+    .select("id, author_id, type, title, description, credit_value, status, created_at, image_url, category")
     .eq("id", id)
     .maybeSingle();
 
@@ -241,7 +242,19 @@ export default async function PostDetailPage({
         <ToastNotice title="Review posted" description={query.reviewed} />
       ) : null}
 
-      <Card>
+      <Card className="overflow-hidden">
+        {post.image_url && (
+          <div className="relative h-64 w-full border-b bg-muted/50 sm:h-80">
+            <Image
+              src={post.image_url}
+              alt={post.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 896px"
+              priority
+            />
+          </div>
+        )}
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="grid gap-2">
