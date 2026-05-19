@@ -22,6 +22,7 @@ type DashboardPageProps = {
   searchParams: Promise<{
     create_error?: string;
     message?: string;
+    category?: string;
   }>;
 };
 
@@ -61,19 +62,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect("/login");
   }
 
+  const categoryParam = params.category;
+  let postsQuery = supabase
+    .from("posts")
+    .select(
+      "id, author_id, type, title, description, credit_value, status, created_at, image_url, category",
+    )
+    .in("status", ["open", "paused", "completed"])
+    .order("created_at", { ascending: false });
+
+  if (categoryParam && categoryParam !== "all") {
+    postsQuery = postsQuery.eq("category", categoryParam);
+  }
+
   const [profileResult, postsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("name, credit_balance")
       .eq("id", user.id)
       .maybeSingle(),
-    supabase
-      .from("posts")
-      .select(
-        "id, author_id, type, title, description, credit_value, status, created_at",
-      )
-      .in("status", ["open", "paused", "completed"])
-      .order("created_at", { ascending: false }),
+    postsQuery,
   ]);
   const authorIds = Array.from(
     new Set((postsResult.data ?? []).map((post) => post.author_id)),
@@ -95,6 +103,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     title: post.title,
     description: post.description,
     creditValue: post.credit_value ?? 1,
+    imageUrl: post.image_url ?? null,
+    category: post.category ?? "other",
     status: post.status ?? "open",
     createdAt: post.created_at,
     authorRatingAverage:

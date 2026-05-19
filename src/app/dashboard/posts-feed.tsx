@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Coins, Search, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ export type FeedPost = {
   description: string;
   creditValue: number;
   imageUrl: string | null;
+  category: string;
   status: "open" | "paused" | "in_progress" | "completed" | "canceled";
   createdAt: string | null;
   authorRatingAverage: number | null;
@@ -57,6 +59,7 @@ type FeedPostRow = {
   description: string;
   credit_value: number | null;
   image_url: string | null;
+  category: string;
   status: FeedPost["status"] | null;
   created_at: string | null;
 };
@@ -79,6 +82,9 @@ const statusLabels: Record<FeedPost["status"], string> = {
 
 export function PostsFeed({ posts }: PostsFeedProps) {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentCategory = searchParams.get("category") || "all";
   const refreshInFlightRef = useRef(false);
   const feedSignatureRef = useRef(getFeedSignature(posts));
   const [livePosts, setLivePosts] = useState(posts);
@@ -94,13 +100,19 @@ export function PostsFeed({ posts }: PostsFeedProps) {
     refreshInFlightRef.current = true;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("posts")
         .select(
-          "id, author_id, type, title, description, credit_value, status, created_at, image_url",
+          "id, author_id, type, title, description, credit_value, status, created_at, image_url, category",
         )
         .in("status", ["open", "paused", "completed"])
         .order("created_at", { ascending: false });
+
+      if (currentCategory !== "all") {
+        query = query.eq("category", currentCategory);
+      }
+
+      const { data, error } = await query;
 
       if (error || !data) {
         return;
@@ -126,7 +138,18 @@ export function PostsFeed({ posts }: PostsFeedProps) {
     } finally {
       refreshInFlightRef.current = false;
     }
-  }, [supabase]);
+  }, [supabase, currentCategory]);
+
+  const handleCategoryChange = useCallback((category: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (category === "all") {
+      params.delete("category");
+    } else {
+      params.set("category", category);
+    }
+    router.push(`/dashboard?${params.toString()}`);
+  }, [router, searchParams]);
+
   const filteredPosts = useMemo(() => {
     const normalizedQuery = deferredQuery.trim().toLowerCase();
 
@@ -195,7 +218,7 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             </span>
           </div>
         </div>
-        <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto] xl:items-center">
+        <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto_auto] xl:items-center">
           <label className="relative">
             <span className="sr-only">Search posts by title</span>
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -225,6 +248,18 @@ export function PostsFeed({ posts }: PostsFeedProps) {
               <TabsTrigger value="all">All types</TabsTrigger>
               <TabsTrigger value="offer">Offers</TabsTrigger>
               <TabsTrigger value="need">Needs</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Tabs
+            value={currentCategory}
+            onValueChange={handleCategoryChange}
+          >
+            <TabsList>
+              <TabsTrigger value="all">All Categories</TabsTrigger>
+              <TabsTrigger value="items">Items</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="errands">Errands</TabsTrigger>
+              <TabsTrigger value="other">Other</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -285,6 +320,9 @@ const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
             <div className="flex flex-wrap justify-end gap-2">
               <Badge variant={post.type === "offer" ? "default" : "outline"}>
                 {post.type === "offer" ? "Offer" : "Need"}
+              </Badge>
+              <Badge variant="secondary" className="capitalize">
+                {post.category}
               </Badge>
               <Badge
                 variant={post.status === "completed" ? "secondary" : "outline"}
@@ -381,6 +419,7 @@ function mapFeedPost(
     description: post.description,
     creditValue: post.credit_value ?? 1,
     imageUrl: post.image_url ?? null,
+    category: post.category ?? "other",
     status: normalizePostStatus(post.status),
     createdAt: post.created_at,
     authorRatingAverage: stats?.average ?? null,
@@ -426,6 +465,7 @@ function getFeedSignature(posts: FeedPost[]) {
         post.description,
         post.creditValue,
         post.imageUrl ?? "",
+        post.category ?? "other",
         post.status,
         post.createdAt,
         post.authorRatingAverage ?? "",

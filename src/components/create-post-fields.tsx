@@ -54,6 +54,22 @@ export function CreatePostFields({ pricingPosts }: CreatePostFieldsProps) {
       </div>
 
       <div className="grid gap-2">
+        <Label htmlFor="category">Category</Label>
+        <select
+          id="category"
+          name="category"
+          defaultValue="other"
+          disabled={pending}
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="items">Items</option>
+          <option value="services">Services</option>
+          <option value="errands">Errands</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor="title">Title</Label>
         <Input
           id="title"
