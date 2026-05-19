@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Coins, LoaderCircle, Sparkles } from "lucide-react";
+import { Coins, LoaderCircle, Sparkles, Image as ImageIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,21 @@ export function CreatePostFields({ pricingPosts }: CreatePostFieldsProps) {
           disabled={pending}
           required
         />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="image_file">Post image (optional)</Label>
+        <div className="flex items-center gap-4 rounded-md border border-dashed p-4">
+          <ImageIcon className="size-8 text-muted-foreground" />
+          <Input
+            id="image_file"
+            name="image_file"
+            type="file"
+            accept="image/png, image/jpeg, image/webp"
+            disabled={pending}
+            className="file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-muted file:text-muted-foreground hover:file:bg-muted/80 file:text-sm file:font-medium h-auto border-0 p-0 shadow-none bg-transparent"
+          />
+        </div>
       </div>
 
       <div className="grid gap-2">

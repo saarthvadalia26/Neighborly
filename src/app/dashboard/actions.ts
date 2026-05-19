@@ -22,6 +22,7 @@ export async function createPost(formData: FormData) {
   const title = readString(formData, "title");
   const description = readString(formData, "description");
   const creditValue = Number.parseInt(readString(formData, "credit_value"), 10);
+  const imageUrl = readString(formData, "image_url");
 
   if (type !== "offer" && type !== "need") {
     redirectWithPostError("Choose whether this post is an offer or a need.");
@@ -54,6 +55,7 @@ export async function createPost(formData: FormData) {
     title,
     description,
     credit_value: creditValue,
+    image_url: imageUrl || null,
   });
 
   if (error) {

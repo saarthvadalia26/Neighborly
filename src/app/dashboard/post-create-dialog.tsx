@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { uploadPostImage } from "@/lib/supabase/storage";
+
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +29,25 @@ export function PostCreateDialog({
 }: {
   pricingPosts: CreditPricingPost[];
 }) {
+  const [errorMsg, setErrorMsg] = useState("");
+
+  async function handleSubmit(formData: FormData) {
+    setErrorMsg("");
+    const file = formData.get("image_file") as File | null;
+    
+    if (file && file.size > 0) {
+      try {
+        const imageUrl = await uploadPostImage(file);
+        formData.set("image_url", imageUrl);
+      } catch (err: any) {
+        setErrorMsg(err.message);
+        return;
+      }
+    }
+    
+    await createPost(formData);
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -43,10 +65,15 @@ export function PostCreateDialog({
         </DialogHeader>
 
         <form
-          action={createPost}
+          action={handleSubmit}
           className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-4"
         >
           <div className="-mx-1 grid min-h-0 gap-4 overflow-y-auto px-1 pr-2">
+            {errorMsg && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm font-medium text-destructive">
+                {errorMsg}
+              </div>
+            )}
             <CreatePostFields pricingPosts={pricingPosts} />
           </div>
 

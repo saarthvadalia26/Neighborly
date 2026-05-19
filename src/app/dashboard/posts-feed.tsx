@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   memo,
   useCallback,
@@ -34,6 +35,7 @@ export type FeedPost = {
   title: string;
   description: string;
   creditValue: number;
+  imageUrl: string | null;
   status: "open" | "paused" | "in_progress" | "completed" | "canceled";
   createdAt: string | null;
   authorRatingAverage: number | null;
@@ -54,6 +56,7 @@ type FeedPostRow = {
   title: string;
   description: string;
   credit_value: number | null;
+  image_url: string | null;
   status: FeedPost["status"] | null;
   created_at: string | null;
 };
@@ -94,7 +97,7 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       const { data, error } = await supabase
         .from("posts")
         .select(
-          "id, author_id, type, title, description, credit_value, status, created_at",
+          "id, author_id, type, title, description, credit_value, status, created_at, image_url",
         )
         .in("status", ["open", "paused", "completed"])
         .order("created_at", { ascending: false });
@@ -261,7 +264,18 @@ const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
       href={`/dashboard/post/${post.id}`}
       className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      <Card className="min-h-44 transition-colors hover:bg-muted/30">
+      <Card className="min-h-44 overflow-hidden transition-colors hover:bg-muted/30">
+        {post.imageUrl && (
+          <div className="relative h-48 w-full border-b bg-muted/50">
+            <Image
+              src={post.imageUrl}
+              alt={post.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
+        )}
         <CardHeader>
           <CardTitle>{post.title}</CardTitle>
           <CardDescription className="line-clamp-2">
@@ -366,6 +380,7 @@ function mapFeedPost(
     title: post.title,
     description: post.description,
     creditValue: post.credit_value ?? 1,
+    imageUrl: post.image_url ?? null,
     status: normalizePostStatus(post.status),
     createdAt: post.created_at,
     authorRatingAverage: stats?.average ?? null,
@@ -410,6 +425,7 @@ function getFeedSignature(posts: FeedPost[]) {
         post.title,
         post.description,
         post.creditValue,
+        post.imageUrl ?? "",
         post.status,
         post.createdAt,
         post.authorRatingAverage ?? "",
