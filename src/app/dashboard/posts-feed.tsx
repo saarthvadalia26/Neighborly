@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Coins, Search, Star } from "lucide-react";
 
@@ -32,7 +32,7 @@ import { createClient } from "@/lib/supabase/browser";
 
 const MotionTabsTrigger = motion(TabsTrigger);
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -42,9 +42,13 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 24 },
+  },
 };
 
 export type FeedPost = {
@@ -318,59 +322,65 @@ export function PostsFeed({ posts }: PostsFeedProps) {
 
 const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
   return (
-    <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+    <motion.div
+      variants={itemVariants}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
       <Link
         href={`/dashboard/post/${post.id}`}
         className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <Card className="min-h-44 overflow-hidden transition-all hover:bg-muted/30 hover:shadow-md">
-        {post.imageUrl && (
-          <div className="relative h-48 w-full border-b bg-muted/50">
-            <Image
-              src={post.imageUrl}
-              alt={post.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          </div>
-        )}
-        <CardHeader>
-          <CardTitle>{post.title}</CardTitle>
-          <CardDescription className="line-clamp-2">
-            {post.description}
-          </CardDescription>
-          <CardAction>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Badge variant={post.type === "offer" ? "default" : "outline"}>
-                {post.type === "offer" ? "Offer" : "Need"}
-              </Badge>
-              <Badge variant="secondary" className="capitalize">
-                {post.category}
-              </Badge>
-              <Badge
-                variant={post.status === "completed" ? "secondary" : "outline"}
-              >
-                {statusLabels[post.status]}
-              </Badge>
+          {post.imageUrl && (
+            <div className="relative h-48 w-full border-b bg-muted/50">
+              <Image
+                src={post.imageUrl}
+                alt={post.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
             </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="grid gap-1 text-sm text-muted-foreground">
-          <span>Posted {formatPostDate(post.createdAt)}</span>
-          <AuthorRating
-            average={post.authorRatingAverage}
-            count={post.authorReviewCount}
-          />
-        </CardContent>
-        <CardFooter className="justify-between">
-          <span className="text-sm text-muted-foreground">Credit value</span>
-          <Badge variant="secondary" className="gap-1">
-            <Coins className="size-3" />
-            {post.creditValue}
-          </Badge>
-        </CardFooter>
-      </Card>
+          )}
+          <CardHeader>
+            <CardTitle>{post.title}</CardTitle>
+            <CardDescription className="line-clamp-2">
+              {post.description}
+            </CardDescription>
+            <CardAction>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Badge variant={post.type === "offer" ? "default" : "outline"}>
+                  {post.type === "offer" ? "Offer" : "Need"}
+                </Badge>
+                <Badge variant="secondary" className="capitalize">
+                  {post.category}
+                </Badge>
+                <Badge
+                  variant={
+                    post.status === "completed" ? "secondary" : "outline"
+                  }
+                >
+                  {statusLabels[post.status]}
+                </Badge>
+              </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="grid gap-1 text-sm text-muted-foreground">
+            <span>Posted {formatPostDate(post.createdAt)}</span>
+            <AuthorRating
+              average={post.authorRatingAverage}
+              count={post.authorReviewCount}
+            />
+          </CardContent>
+          <CardFooter className="justify-between">
+            <span className="text-sm text-muted-foreground">Credit value</span>
+            <Badge variant="secondary" className="gap-1">
+              <Coins className="size-3" />
+              {post.creditValue}
+            </Badge>
+          </CardFooter>
+        </Card>
       </Link>
     </motion.div>
   );

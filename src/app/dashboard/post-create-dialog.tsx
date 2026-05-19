@@ -34,17 +34,19 @@ export function PostCreateDialog({
   async function handleSubmit(formData: FormData) {
     setErrorMsg("");
     const file = formData.get("image_file") as File | null;
-    
+
     if (file && file.size > 0) {
       try {
         const imageUrl = await uploadPostImage(file);
         formData.set("image_url", imageUrl);
-      } catch (err: any) {
-        setErrorMsg(err.message);
+      } catch (err: unknown) {
+        setErrorMsg(
+          err instanceof Error ? err.message : "Image upload failed.",
+        );
         return;
       }
     }
-    
+
     await createPost(formData);
   }
 
