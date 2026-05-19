@@ -331,18 +331,7 @@ const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
         href={`/dashboard/post/${post.id}`}
         className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <Card className="min-h-44 overflow-hidden transition-all hover:bg-muted/30 hover:shadow-md">
-          {post.imageUrl && (
-            <div className="relative h-48 w-full border-b bg-muted/50">
-              <Image
-                src={post.imageUrl}
-                alt={post.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            </div>
-          )}
+        <Card className="min-h-44 transition-all hover:bg-muted/30 hover:shadow-md">
           <CardHeader>
             <CardTitle>{post.title}</CardTitle>
             <CardDescription className="line-clamp-2">
