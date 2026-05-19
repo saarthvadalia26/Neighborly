@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Coins, Search, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -68,38 +76,56 @@ const statusLabels: Record<FeedPost["status"], string> = {
 
 export function PostsFeed({ posts }: PostsFeedProps) {
   const supabase = useMemo(() => createClient(), []);
+  const refreshInFlightRef = useRef(false);
+  const feedSignatureRef = useRef(getFeedSignature(posts));
   const [livePosts, setLivePosts] = useState(posts);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const refreshPosts = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select(
-        "id, author_id, type, title, description, credit_value, status, created_at",
-      )
-      .in("status", ["open", "paused", "completed"])
-      .order("created_at", { ascending: false });
-
-    if (error || !data) {
+    if (refreshInFlightRef.current) {
       return;
     }
 
-    const authorIds = Array.from(new Set(data.map((post) => post.author_id)));
-    const { data: reviews } = authorIds.length
-      ? await supabase
-          .from("reviews")
-          .select("reviewee_id, rating")
-          .in("reviewee_id", authorIds)
-      : { data: [] };
-    const reviewStatsByProfile = buildReviewStatsByProfile(reviews ?? []);
+    refreshInFlightRef.current = true;
 
-    setLivePosts(
-      data.map((post) => mapFeedPost(post, reviewStatsByProfile)),
-    );
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select(
+          "id, author_id, type, title, description, credit_value, status, created_at",
+        )
+        .in("status", ["open", "paused", "completed"])
+        .order("created_at", { ascending: false });
+
+      if (error || !data) {
+        return;
+      }
+
+      const authorIds = Array.from(new Set(data.map((post) => post.author_id)));
+      const { data: reviews } = authorIds.length
+        ? await supabase
+            .from("reviews")
+            .select("reviewee_id, rating")
+            .in("reviewee_id", authorIds)
+        : { data: [] };
+      const reviewStatsByProfile = buildReviewStatsByProfile(reviews ?? []);
+      const nextPosts = data.map((post) =>
+        mapFeedPost(post, reviewStatsByProfile),
+      );
+      const nextFeedSignature = getFeedSignature(nextPosts);
+
+      if (feedSignatureRef.current !== nextFeedSignature) {
+        feedSignatureRef.current = nextFeedSignature;
+        setLivePosts(nextPosts);
+      }
+    } finally {
+      refreshInFlightRef.current = false;
+    }
   }, [supabase]);
   const filteredPosts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = deferredQuery.trim().toLowerCase();
 
     return livePosts.filter(
       (post) =>
@@ -107,7 +133,7 @@ export function PostsFeed({ posts }: PostsFeedProps) {
         (statusFilter === "all" || post.status === statusFilter) &&
         post.title.toLowerCase().includes(normalizedQuery),
     );
-  }, [livePosts, query, statusFilter, typeFilter]);
+  }, [deferredQuery, livePosts, statusFilter, typeFilter]);
   const activePostsCount = livePosts.filter(
     (post) => post.status === "open",
   ).length;
@@ -135,17 +161,23 @@ export function PostsFeed({ posts }: PostsFeedProps) {
 
   useEffect(() => {
     const refreshInterval = window.setInterval(() => {
-      void refreshPosts();
+      if (document.visibilityState === "visible") {
+        void refreshPosts();
+      }
     }, POST_REFRESH_INTERVAL_MS);
-    const refreshOnFocus = () => {
-      void refreshPosts();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshPosts();
+      }
     };
 
-    window.addEventListener("focus", refreshOnFocus);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       window.clearInterval(refreshInterval);
-      window.removeEventListener("focus", refreshOnFocus);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [refreshPosts]);
 
@@ -210,50 +242,7 @@ export function PostsFeed({ posts }: PostsFeedProps) {
       {filteredPosts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredPosts.map((post) => (
-            <Link
-              key={post.id}
-              href={`/dashboard/post/${post.id}`}
-              className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <Card className="min-h-44 transition-colors hover:bg-muted/30">
-                <CardHeader>
-                  <CardTitle>{post.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {post.description}
-                  </CardDescription>
-                  <CardAction>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Badge
-                        variant={post.type === "offer" ? "default" : "outline"}
-                      >
-                        {post.type === "offer" ? "Offer" : "Need"}
-                      </Badge>
-                      <Badge
-                        variant={
-                          post.status === "completed" ? "secondary" : "outline"
-                        }
-                      >
-                        {statusLabels[post.status]}
-                      </Badge>
-                    </div>
-                  </CardAction>
-                </CardHeader>
-                <CardContent className="grid gap-1 text-sm text-muted-foreground">
-                  <span>Posted {formatPostDate(post.createdAt)}</span>
-                  <AuthorRating
-                    average={post.authorRatingAverage}
-                    count={post.authorReviewCount}
-                  />
-                </CardContent>
-                <CardFooter className="justify-between">
-                  <span className="text-sm text-muted-foreground">Credit value</span>
-                  <Badge variant="secondary" className="gap-1">
-                    <Coins className="size-3" />
-                    {post.creditValue}
-                  </Badge>
-                </CardFooter>
-              </Card>
-            </Link>
+            <PostCardLink key={post.id} post={post} />
           ))}
         </div>
       ) : (
@@ -265,6 +254,50 @@ export function PostsFeed({ posts }: PostsFeedProps) {
     </section>
   );
 }
+
+const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
+  return (
+    <Link
+      href={`/dashboard/post/${post.id}`}
+      className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <Card className="min-h-44 transition-colors hover:bg-muted/30">
+        <CardHeader>
+          <CardTitle>{post.title}</CardTitle>
+          <CardDescription className="line-clamp-2">
+            {post.description}
+          </CardDescription>
+          <CardAction>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Badge variant={post.type === "offer" ? "default" : "outline"}>
+                {post.type === "offer" ? "Offer" : "Need"}
+              </Badge>
+              <Badge
+                variant={post.status === "completed" ? "secondary" : "outline"}
+              >
+                {statusLabels[post.status]}
+              </Badge>
+            </div>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="grid gap-1 text-sm text-muted-foreground">
+          <span>Posted {formatPostDate(post.createdAt)}</span>
+          <AuthorRating
+            average={post.authorRatingAverage}
+            count={post.authorReviewCount}
+          />
+        </CardContent>
+        <CardFooter className="justify-between">
+          <span className="text-sm text-muted-foreground">Credit value</span>
+          <Badge variant="secondary" className="gap-1">
+            <Coins className="size-3" />
+            {post.creditValue}
+          </Badge>
+        </CardFooter>
+      </Card>
+    </Link>
+  );
+});
 
 function EmptyFeedState({
   hasAnyPosts,
@@ -365,4 +398,23 @@ function formatPostDate(value: string | null) {
     month: "short",
     day: "numeric",
   }).format(new Date(value));
+}
+
+function getFeedSignature(posts: FeedPost[]) {
+  return posts
+    .map((post) =>
+      [
+        post.id,
+        post.authorId,
+        post.type,
+        post.title,
+        post.description,
+        post.creditValue,
+        post.status,
+        post.createdAt,
+        post.authorRatingAverage ?? "",
+        post.authorReviewCount,
+      ].join(":"),
+    )
+    .join("|");
 }

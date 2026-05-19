@@ -73,6 +73,11 @@ export function PostChat({
   const knownMessageIdsRef = useRef(
     new Set(initialMessages.map((message) => message.id)),
   );
+  const refreshInFlightRef = useRef(false);
+  const messageSignatureRef = useRef(getMessageSignature(initialMessages));
+  const participantSignatureRef = useRef(
+    getParticipantSignature(participants),
+  );
   const [messages, setMessages] = useState(initialMessages);
   const [chatParticipants, setChatParticipants] = useState(participants);
   const [selectedParticipantId, setSelectedParticipantId] = useState(
@@ -100,94 +105,115 @@ export function PostChat({
   const canSendMessage = Boolean(activeReceiverId) && !isThreadClosed;
 
   const refreshMessages = useCallback(async () => {
-    const { data: refreshedMessages, error: refreshError } = await supabase
-      .from("messages")
-      .select("id, post_id, sender_id, receiver_id, content, created_at")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
-
-    if (refreshError || !refreshedMessages) {
+    if (refreshInFlightRef.current) {
       return;
     }
 
-    const profileIds = Array.from(
-      new Set(
-        refreshedMessages
-          .flatMap((message) => [message.sender_id, message.receiver_id])
-          .concat([authorId, currentUserId]),
-      ),
-    );
-    const nameById = new Map<string, string>([
-      [authorId, authorName],
-      [currentUserId, "You"],
-    ]);
+    refreshInFlightRef.current = true;
 
-    if (profileIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name")
-        .in("id", profileIds);
+    try {
+      const { data: refreshedMessages, error: refreshError } = await supabase
+        .from("messages")
+        .select("id, post_id, sender_id, receiver_id, content, created_at")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
 
-      for (const profile of profiles ?? []) {
-        if (profile.name) {
-          nameById.set(profile.id, profile.name);
-        }
+      if (refreshError || !refreshedMessages) {
+        return;
       }
-    }
 
-    const nextMessages = refreshedMessages.map((message) => ({
-      id: message.id,
-      postId: message.post_id,
-      senderId: message.sender_id,
-      receiverId: message.receiver_id,
-      content: message.content,
-      createdAt: message.created_at,
-      senderName:
-        message.sender_id === currentUserId
-          ? "You"
-          : nameById.get(message.sender_id) ?? "Neighbor",
-    }));
-    const newIncomingMessages = nextMessages.filter(
-      (message) =>
-        message.senderId !== currentUserId &&
-        !knownMessageIdsRef.current.has(message.id),
-    );
-
-    for (const message of nextMessages) {
-      knownMessageIdsRef.current.add(message.id);
-    }
-
-    setMessages(nextMessages);
-
-    const latestIncomingMessage =
-      newIncomingMessages[newIncomingMessages.length - 1];
-
-    if (latestIncomingMessage) {
-      setMessageNotification({
-        id: latestIncomingMessage.id,
-        senderId: latestIncomingMessage.senderId,
-        senderName: latestIncomingMessage.senderName,
-        content: latestIncomingMessage.content,
-      });
-    }
-
-    if (isAuthor) {
-      const nextParticipants = Array.from(
+      const profileIds = Array.from(
         new Set(
           refreshedMessages
             .flatMap((message) => [message.sender_id, message.receiver_id])
-            .filter((profileId) => profileId !== authorId),
+            .concat([authorId, currentUserId]),
         ),
-      ).map((profileId) => ({
-        id: profileId,
-        name: nameById.get(profileId) ?? "Neighbor",
-      }));
-
-      setChatParticipants(nextParticipants);
-      setSelectedParticipantId(
-        (currentParticipantId) =>
-          currentParticipantId || nextParticipants[0]?.id || "",
       );
+      const nameById = new Map<string, string>([
+        [authorId, authorName],
+        [currentUserId, "You"],
+      ]);
+
+      if (profileIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, name")
+          .in("id", profileIds);
+
+        for (const profile of profiles ?? []) {
+          if (profile.name) {
+            nameById.set(profile.id, profile.name);
+          }
+        }
+      }
+
+      const nextMessages = refreshedMessages.map((message) => ({
+        id: message.id,
+        postId: message.post_id,
+        senderId: message.sender_id,
+        receiverId: message.receiver_id,
+        content: message.content,
+        createdAt: message.created_at,
+        senderName:
+          message.sender_id === currentUserId
+            ? "You"
+            : nameById.get(message.sender_id) ?? "Neighbor",
+      }));
+      const newIncomingMessages = nextMessages.filter(
+        (message) =>
+          message.senderId !== currentUserId &&
+          !knownMessageIdsRef.current.has(message.id),
+      );
+
+      for (const message of nextMessages) {
+        knownMessageIdsRef.current.add(message.id);
+      }
+
+      const nextMessageSignature = getMessageSignature(nextMessages);
+
+      if (messageSignatureRef.current !== nextMessageSignature) {
+        messageSignatureRef.current = nextMessageSignature;
+        setMessages(nextMessages);
+      }
+
+      const latestIncomingMessage =
+        newIncomingMessages[newIncomingMessages.length - 1];
+
+      if (latestIncomingMessage) {
+        setMessageNotification({
+          id: latestIncomingMessage.id,
+          senderId: latestIncomingMessage.senderId,
+          senderName: latestIncomingMessage.senderName,
+          content: latestIncomingMessage.content,
+        });
+      }
+
+      if (isAuthor) {
+        const nextParticipants = Array.from(
+          new Set(
+            refreshedMessages
+              .flatMap((message) => [message.sender_id, message.receiver_id])
+              .filter((profileId) => profileId !== authorId),
+          ),
+        ).map((profileId) => ({
+          id: profileId,
+          name: nameById.get(profileId) ?? "Neighbor",
+        }));
+        const nextParticipantSignature =
+          getParticipantSignature(nextParticipants);
+
+        if (participantSignatureRef.current !== nextParticipantSignature) {
+          participantSignatureRef.current = nextParticipantSignature;
+          setChatParticipants(nextParticipants);
+        }
+
+        setSelectedParticipantId(
+          (currentParticipantId) =>
+            currentParticipantId || nextParticipants[0]?.id || "",
+        );
+      }
+    } finally {
+      refreshInFlightRef.current = false;
     }
   }, [
     authorId,
@@ -222,17 +248,23 @@ export function PostChat({
 
   useEffect(() => {
     const refreshInterval = window.setInterval(() => {
-      void refreshMessages();
+      if (document.visibilityState === "visible") {
+        void refreshMessages();
+      }
     }, MESSAGE_REFRESH_INTERVAL_MS);
-    const refreshOnFocus = () => {
-      void refreshMessages();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshMessages();
+      }
     };
 
-    window.addEventListener("focus", refreshOnFocus);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       window.clearInterval(refreshInterval);
-      window.removeEventListener("focus", refreshOnFocus);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [refreshMessages]);
 
@@ -288,7 +320,7 @@ export function PostChat({
           return currentMessages;
         }
 
-        return [
+        const nextMessages = [
           ...currentMessages,
           normalizeInsertedMessage(data, {
             authorId,
@@ -297,6 +329,10 @@ export function PostChat({
             participants: chatParticipants,
           }),
         ];
+
+        messageSignatureRef.current = getMessageSignature(nextMessages);
+
+        return nextMessages;
       });
     }
 
@@ -510,4 +546,25 @@ function formatMessageDate(value: string | null) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function getMessageSignature(messages: ChatMessage[]) {
+  return messages
+    .map((message) =>
+      [
+        message.id,
+        message.senderId,
+        message.receiverId,
+        message.content,
+        message.createdAt,
+        message.senderName,
+      ].join(":"),
+    )
+    .join("|");
+}
+
+function getParticipantSignature(participants: ChatParticipant[]) {
+  return participants
+    .map((participant) => `${participant.id}:${participant.name}`)
+    .join("|");
 }
