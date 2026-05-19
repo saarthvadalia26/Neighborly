@@ -27,19 +27,6 @@ export function NotificationBell({
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  // --- Initial load ---
-  useEffect(() => {
-    supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(30)
-      .then(({ data }) => {
-        if (data) setNotifications(data);
-      });
-  }, [supabase, userId]);
-
   // --- Real-time subscription ---
   useEffect(() => {
     const channel = supabase
