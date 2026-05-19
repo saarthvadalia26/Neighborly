@@ -58,6 +58,8 @@ export type Database = {
             | "canceled"
             | null;
           created_at: string | null;
+          image_url: string | null;
+          category: string;
         };
         Insert: {
           id?: string;
@@ -74,6 +76,8 @@ export type Database = {
             | "canceled"
             | null;
           created_at?: string | null;
+          image_url?: string | null;
+          category?: string;
         };
         Update: {
           id?: string;
@@ -90,6 +94,8 @@ export type Database = {
             | "canceled"
             | null;
           created_at?: string | null;
+          image_url?: string | null;
+          category?: string;
         };
         Relationships: [
           {

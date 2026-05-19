@@ -379,7 +379,7 @@ function ReviewsCard({
       <CardHeader>
         <CardTitle>Reviews for {authorName}</CardTitle>
         <CardDescription>
-          Recent feedback from completed swaps.
+          What neighbors have shared after working together.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -412,8 +412,8 @@ function ReviewsCard({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            No reviews yet. Completed swaps will build this reputation over
-            time.
+            No reviews yet. Feedback from future exchanges will help build this
+            reputation over time.
           </p>
         )}
       </CardContent>
