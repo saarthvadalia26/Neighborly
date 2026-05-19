@@ -106,6 +106,36 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          message: string;
+          is_read: boolean;
+          related_post_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type?: string;
+          message: string;
+          is_read?: boolean;
+          related_post_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          message?: string;
+          is_read?: boolean;
+          related_post_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       transactions: {
         Row: {
           id: string;
