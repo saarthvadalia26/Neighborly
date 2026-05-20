@@ -15,7 +15,6 @@ import { logout } from "../(auth)/actions";
 import { PostsFeed, type FeedPost } from "./posts-feed";
 import { PostCreateDialog } from "./post-create-dialog";
 import { SignOutButton } from "./sign-out-button";
-import { NotificationBell } from "@/components/notification-bell";
 
 export const dynamic = "force-dynamic";
 
@@ -122,14 +121,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const creditBalance = profileResult.data?.credit_balance ?? 0;
   const name = profileResult.data?.name ?? user.email ?? "Neighbor";
 
-  // Fetch initial notifications (server-side for zero CLS)
-  const { data: initialNotifications } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
-
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-5xl gap-8">
@@ -152,10 +143,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <NotificationBell
-              userId={user.id}
-              initialNotifications={initialNotifications ?? []}
-            />
             <PostCreateDialog pricingPosts={pricingPosts} />
             <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
               <Link href="/dashboard/activity">
