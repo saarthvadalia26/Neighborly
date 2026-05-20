@@ -15,7 +15,8 @@ export function SignOutButton() {
       disabled={pending}
       aria-busy={pending}
       aria-live="polite"
-      className="w-full min-w-28 gap-2 sm:w-auto"
+      className="w-full gap-1.5 sm:w-auto"
+      size="sm"
     >
       {pending ? (
         <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />

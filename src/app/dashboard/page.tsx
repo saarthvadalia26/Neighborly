@@ -142,15 +142,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Signed in as {name}
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
             <PostCreateDialog pricingPosts={pricingPosts} />
-            <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto">
               <Link href="/dashboard/activity">
                 <History className="size-4" />
                 My activity
               </Link>
             </Button>
-            <Button asChild variant="outline" className="w-full gap-2 sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto">
               <Link href="/settings">
                 <Settings className="size-4" />
                 Settings
