@@ -26,7 +26,7 @@
 
 **Neighborly** is a modern neighborhood trading platform that brings communities closer together. It allows users to exchange useful items, run errands, provide lessons, offer repairs, and lend a neighborly hand—all without the need for cash. 
 
-To keep swaps fair and reciprocal, trades are priced in **Credits**, a simple, balanced system that ensures everyone contributes and benefits equally within the community.
+To keep exchanges fair and reciprocal, trades are priced in **Credits**, a simple, balanced system that ensures everyone contributes and benefits equally within the community.
 
 ## ✨ Key Features
 
@@ -36,7 +36,7 @@ To keep swaps fair and reciprocal, trades are priced in **Credits**, a simple, b
 - **📝 Interactive Posts:** Easily create offers or requests with a clean, user-friendly dialog.
 - **👤 Smart Profiles:** Auto-generated profiles featuring display names derived from user signup metadata.
 - **🤝 Negotiated Trades & Messaging:** Built-in messaging and transparent transaction processing for seamless credit transfers.
-- **⭐ Reputation System:** Complete swaps with confidence using the integrated ratings and written reviews system.
+- **⭐ Reputation System:** Complete exchanges with confidence using the integrated ratings and written reviews system.
 - **⚡ Advanced SSR Integration:** Utilizes Supabase SSR helpers for robust browser, server, and proxy session management.
 
 ## 🛠️ Tech Stack
@@ -128,7 +128,7 @@ We are actively working on making **Neighborly** even better. Here is what we ar
 
 - **📍 Map Integration & Geolocation:** View and explore local offers directly on an interactive map.
 - **📸 Image Uploads:** Attach images to your posts using Supabase Storage.
-- **🔔 Real-Time Notifications:** In-app alerts to keep you updated on your swaps, messages, and credit transfers.
+- **🔔 Real-Time Notifications:** In-app alerts to keep you updated on your exchanges, messages, and credit transfers.
 - **✨ Premium UI/UX:** Polished interfaces and smooth micro-animations for a high-end user experience.
 - **🏷️ Categories & Advanced Filtering:** Easily organize and discover posts through robust categorization.
 
