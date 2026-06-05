@@ -47,7 +47,16 @@ export function PostCreateDialog({
       }
     }
 
-    await createPost(formData);
+    try {
+      const result = await createPost(formData);
+      if (result && result.error) {
+        setErrorMsg(result.error);
+      }
+    } catch (err: unknown) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "An unexpected error occurred.",
+      );
+    }
   }
 
   return (

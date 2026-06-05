@@ -11,13 +11,7 @@ function readString(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function redirectWithPostError(message: string): never {
-  const searchParams = new URLSearchParams({ create_error: message });
-
-  redirect(`/dashboard?${searchParams.toString()}`);
-}
-
-export async function createPost(formData: FormData) {
+export async function createPost(formData: FormData): Promise<{ error?: string } | never> {
   const type = readString(formData, "type");
   const title = readString(formData, "title");
   const description = readString(formData, "description");
@@ -26,19 +20,19 @@ export async function createPost(formData: FormData) {
   const category = readString(formData, "category") || "other";
 
   if (type !== "offer" && type !== "need") {
-    redirectWithPostError("Choose whether this post is an offer or a need.");
+    return { error: "Choose whether this post is an offer or a need." };
   }
 
   if (title.length < 3 || title.length > 100) {
-    redirectWithPostError("Title must be between 3 and 100 characters.");
+    return { error: "Title must be between 3 and 100 characters." };
   }
 
   if (description.length < 10 || description.length > 1000) {
-    redirectWithPostError("Description must be between 10 and 1000 characters.");
+    return { error: "Description must be between 10 and 1000 characters." };
   }
 
   if (!Number.isInteger(creditValue) || creditValue < 1 || creditValue > 5) {
-    redirectWithPostError("Credit value must be a whole number from 1 to 5.");
+    return { error: "Credit value must be a whole number from 1 to 5." };
   }
 
   const supabase = await createClient();
@@ -61,10 +55,11 @@ export async function createPost(formData: FormData) {
   });
 
   if (error) {
-    redirectWithPostError(error.message);
+    return { error: error.message };
   }
 
   revalidatePath("/dashboard");
 
   redirect("/dashboard?message=Post%20created.");
 }
+
