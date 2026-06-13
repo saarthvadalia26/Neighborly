@@ -245,8 +245,8 @@ export function PostsFeed({ posts }: PostsFeedProps) {
             <span>{formatFeedCount(filteredPosts.length, typeFilter)}</span>
           </div>
         </div>
-        <div className="grid gap-3 xl:grid-cols-[minmax(220px,320px)_auto_auto_auto] xl:items-center">
-          <label className="relative">
+        <div className="flex flex-wrap items-center gap-3 w-full">
+          <label className="relative w-full sm:w-72">
             <span className="sr-only">Search posts by title</span>
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -259,8 +259,9 @@ export function PostsFeed({ posts }: PostsFeedProps) {
           <Tabs
             value={statusFilter}
             onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+            className="max-w-full"
           >
-            <TabsList>
+            <TabsList className="max-w-full overflow-x-auto scrollbar-none flex-nowrap justify-start">
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="all">All statuses</MotionTabsTrigger>
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="open">Available</MotionTabsTrigger>
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="paused">Paused</MotionTabsTrigger>
@@ -270,8 +271,9 @@ export function PostsFeed({ posts }: PostsFeedProps) {
           <Tabs
             value={typeFilter}
             onValueChange={(value) => setTypeFilter(value as TypeFilter)}
+            className="max-w-full"
           >
-            <TabsList>
+            <TabsList className="max-w-full overflow-x-auto scrollbar-none flex-nowrap justify-start">
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="all">All types</MotionTabsTrigger>
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="offer">Offers</MotionTabsTrigger>
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="need">Needs</MotionTabsTrigger>
@@ -280,8 +282,9 @@ export function PostsFeed({ posts }: PostsFeedProps) {
           <Tabs
             value={currentCategory}
             onValueChange={handleCategoryChange}
+            className="max-w-full"
           >
-            <TabsList>
+            <TabsList className="max-w-full overflow-x-auto scrollbar-none flex-nowrap justify-start">
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="all">All Categories</MotionTabsTrigger>
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="items">Items</MotionTabsTrigger>
               <MotionTabsTrigger whileTap={{ scale: 0.95 }} value="services">Services</MotionTabsTrigger>
