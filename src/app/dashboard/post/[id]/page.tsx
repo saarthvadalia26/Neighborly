@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToastNotice } from "@/components/toast-notice";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Card,
   CardContent,
@@ -372,7 +373,7 @@ function ProfileRating({
 
   return (
     <span className="inline-flex items-center gap-1">
-      <Star className="size-3.5 fill-foreground text-foreground" />
+      <Star className="size-3.5 fill-amber-400 text-amber-500" />
       {formatRating(average)} from {count} {count === 1 ? "review" : "reviews"}
     </span>
   );
@@ -405,7 +406,7 @@ function ReviewsCard({
               >
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Badge variant="secondary" className="gap-1">
-                    <Star className="size-3 fill-foreground text-foreground" />
+                    <Star className="size-3 fill-amber-400 text-amber-500" />
                     {review.rating}
                   </Badge>
                   <span className="font-medium">
@@ -438,12 +439,15 @@ function PostDetailShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-4xl gap-6">
-        <Button asChild variant="ghost" className="w-fit gap-2">
-          <Link href="/dashboard">
-            <ArrowLeft className="size-4" />
-            Back to marketplace
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button asChild variant="ghost" className="w-fit gap-2">
+            <Link href="/dashboard">
+              <ArrowLeft className="size-4" />
+              Back to marketplace
+            </Link>
+          </Button>
+          <ThemeToggle />
+        </div>
         {children}
       </div>
     </main>

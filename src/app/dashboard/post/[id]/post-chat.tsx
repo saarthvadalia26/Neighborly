@@ -56,7 +56,7 @@ type MessageNotification = Pick<
   "id" | "senderId" | "senderName" | "content"
 >;
 
-const MESSAGE_REFRESH_INTERVAL_MS = 3000;
+const MESSAGE_REFRESH_INTERVAL_MS = 10000;
 const MESSAGE_NOTIFICATION_VISIBLE_MS = 5500;
 
 export function PostChat({
@@ -100,7 +100,10 @@ export function PostChat({
       );
     }
 
-    return message.senderId === authorId || message.receiverId === authorId;
+    return (
+      (message.senderId === currentUserId && message.receiverId === authorId) ||
+      (message.senderId === authorId && message.receiverId === currentUserId)
+    );
   });
   const canSendMessage = Boolean(activeReceiverId) && !isThreadClosed;
 
@@ -345,7 +348,7 @@ export function PostChat({
         <div
           role="status"
           aria-live="polite"
-          className="fixed right-4 top-4 z-50 w-[min(calc(100vw-2rem),22rem)] rounded-lg border bg-background p-3 shadow-lg ring-1 ring-border"
+          className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(calc(100vw-2rem),22rem)] rounded-lg border bg-background p-3 shadow-lg ring-1 ring-border"
         >
           <div className="flex items-start gap-3">
             <button

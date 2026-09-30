@@ -1,10 +1,14 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+    <main className="relative flex min-h-screen items-center justify-center bg-background px-6 py-12">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <section className="mx-auto grid w-full max-w-3xl gap-8 text-center">
         <div className="grid gap-4">
           <p className="text-sm font-medium text-muted-foreground">

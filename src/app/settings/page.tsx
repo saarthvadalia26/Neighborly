@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import { DeleteAccountForm } from "./delete-account-form";
 
@@ -102,12 +103,15 @@ function SettingsShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-3xl gap-6">
-        <Button asChild variant="ghost" className="w-fit gap-2">
-          <Link href="/dashboard">
-            <ArrowLeft className="size-4" />
-            Back to marketplace
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button asChild variant="ghost" className="w-fit gap-2">
+            <Link href="/dashboard">
+              <ArrowLeft className="size-4" />
+              Back to marketplace
+            </Link>
+          </Button>
+          <ThemeToggle />
+        </div>
         <header className="grid gap-1 border-b pb-5">
           <p className="text-sm font-medium text-muted-foreground">
             Neighborly

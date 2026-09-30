@@ -11,6 +11,8 @@ import { buildReviewStatsByProfile } from "@/lib/reviews";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 import { logout } from "../(auth)/actions";
 import { PostsFeed, type FeedPost } from "./posts-feed";
 import { PostCreateDialog } from "./post-create-dialog";
@@ -142,20 +144,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Signed in as {name}
             </p>
           </div>
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
             <PostCreateDialog pricingPosts={pricingPosts} />
-            <Button asChild variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
               <Link href="/dashboard/activity">
                 <History className="size-4" />
-                My activity
+                <span>My activity</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="w-full gap-1.5 sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
               <Link href="/settings">
                 <Settings className="size-4" />
-                Settings
+                <span>Settings</span>
               </Link>
             </Button>
+            <ThemeToggle />
             <form action={logout}>
               <SignOutButton />
             </form>

@@ -111,6 +111,10 @@ Run the following SQL scripts in your Supabase SQL Editor in the order provided 
    supabase/post-owner-account-controls.sql
    supabase/account-deletion-service-role-grants.sql
    ```
+6. **Security Hardening & Concurrency Protection:**
+   ```text
+   supabase/security-hardening-and-fixes.sql
+   ```
 
 ### 5. Run the Application
 

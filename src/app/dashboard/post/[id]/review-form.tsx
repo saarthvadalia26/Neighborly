@@ -67,7 +67,9 @@ export function ReviewForm({
                   <Star
                     className={cn(
                       "size-4",
-                      value <= rating ? "fill-current" : null,
+                      value <= rating
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-muted-foreground",
                     )}
                   />
                 </Button>

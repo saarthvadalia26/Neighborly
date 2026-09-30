@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -286,12 +287,15 @@ function ActivityShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-5xl gap-6">
-        <Button asChild variant="ghost" className="w-fit gap-2">
-          <Link href="/dashboard">
-            <ArrowLeft className="size-4" />
-            Back to marketplace
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button asChild variant="ghost" className="w-fit gap-2">
+            <Link href="/dashboard">
+              <ArrowLeft className="size-4" />
+              Back to marketplace
+            </Link>
+          </Button>
+          <ThemeToggle />
+        </div>
         {children}
       </div>
     </main>

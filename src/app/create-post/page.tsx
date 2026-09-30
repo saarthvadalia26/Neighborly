@@ -14,6 +14,7 @@ import {
 import type { CreditPricingPost } from "@/lib/credit-guidance";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import { CreatePostForm } from "./create-post-form";
 
@@ -60,12 +61,15 @@ export default async function CreatePostPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-2xl gap-6">
-        <Button asChild variant="ghost" className="w-fit gap-2">
-          <Link href="/dashboard">
-            <ArrowLeft className="size-4" />
-            Back to feed
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button asChild variant="ghost" className="w-fit gap-2">
+            <Link href="/dashboard">
+              <ArrowLeft className="size-4" />
+              Back to feed
+            </Link>
+          </Button>
+          <ThemeToggle />
+        </div>
 
         <Card>
           <CardHeader>

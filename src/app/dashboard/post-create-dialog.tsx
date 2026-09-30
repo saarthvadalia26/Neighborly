@@ -29,6 +29,7 @@ export function PostCreateDialog({
 }: {
   pricingPosts: CreditPricingPost[];
 }) {
+  const [open, setOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit(formData: FormData) {
@@ -51,8 +52,20 @@ export function PostCreateDialog({
       const result = await createPost(formData);
       if (result && result.error) {
         setErrorMsg(result.error);
+      } else {
+        setOpen(false);
       }
     } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "digest" in err &&
+        typeof (err as { digest: unknown }).digest === "string" &&
+        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+      ) {
+        setOpen(false);
+        throw err;
+      }
       setErrorMsg(
         err instanceof Error ? err.message : "An unexpected error occurred.",
       );
@@ -60,7 +73,7 @@ export function PostCreateDialog({
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="size-4" />

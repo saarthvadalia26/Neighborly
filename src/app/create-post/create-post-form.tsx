@@ -39,6 +39,15 @@ export function CreatePostForm({
         setErrorMsg(result.error);
       }
     } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "digest" in err &&
+        typeof (err as { digest: unknown }).digest === "string" &&
+        (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+      ) {
+        throw err;
+      }
       setErrorMsg(
         err instanceof Error ? err.message : "An unexpected error occurred.",
       );

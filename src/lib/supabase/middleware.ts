@@ -47,5 +47,9 @@ export async function updateSession(request: NextRequest) {
 }
 
 function isProtectedPath(pathname: string) {
-  return pathname.startsWith("/dashboard") || pathname.startsWith("/create-post");
+  return (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/create-post") ||
+    pathname.startsWith("/settings")
+  );
 }

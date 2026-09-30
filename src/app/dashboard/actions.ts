@@ -35,6 +35,27 @@ export async function createPost(formData: FormData): Promise<{ error?: string }
     return { error: "Credit value must be a whole number from 1 to 5." };
   }
 
+  const allowedCategories = ["items", "services", "errands", "other"];
+  const validCategory = allowedCategories.includes(category) ? category : "other";
+
+  let sanitizedImageUrl: string | null = null;
+  if (imageUrl) {
+    try {
+      const parsedUrl = new URL(imageUrl);
+      if (
+        parsedUrl.protocol === "https:" &&
+        (parsedUrl.hostname.endsWith(".supabase.co") ||
+          parsedUrl.hostname === "localhost" ||
+          parsedUrl.hostname === "127.0.0.1") &&
+        parsedUrl.pathname.includes("/post_images/")
+      ) {
+        sanitizedImageUrl = imageUrl;
+      }
+    } catch {
+      sanitizedImageUrl = null;
+    }
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,8 +71,8 @@ export async function createPost(formData: FormData): Promise<{ error?: string }
     title,
     description,
     credit_value: creditValue,
-    image_url: imageUrl || null,
-    category,
+    image_url: sanitizedImageUrl,
+    category: validCategory,
   });
 
   if (error) {

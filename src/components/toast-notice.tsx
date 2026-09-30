@@ -39,7 +39,7 @@ export function ToastNotice({
       role={variant === "error" ? "alert" : "status"}
       aria-live={variant === "error" ? "assertive" : "polite"}
       className={cn(
-        "fixed right-4 top-4 z-50 w-[min(calc(100vw-2rem),24rem)] rounded-lg border bg-background p-3 text-sm shadow-lg ring-1 ring-border",
+        "fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(calc(100vw-2rem),24rem)] rounded-lg border bg-background p-3 text-sm shadow-lg ring-1 ring-border",
         variant === "error" ? "border-destructive/30" : "border-border",
       )}
     >

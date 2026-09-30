@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   memo,
   useCallback,
@@ -85,7 +86,7 @@ type FeedPostRow = {
   created_at: string | null;
 };
 
-const POST_REFRESH_INTERVAL_MS = 5000;
+const POST_REFRESH_INTERVAL_MS = 15000;
 
 const feedNouns: Record<TypeFilter, string> = {
   all: "listings",
@@ -119,6 +120,11 @@ export function PostsFeed({ posts }: PostsFeedProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
+
+  useEffect(() => {
+    setLivePosts(posts);
+    feedSignatureRef.current = getFeedSignature(posts);
+  }, [posts]);
   const refreshPosts = useCallback(async () => {
     if (refreshInFlightRef.current) {
       return;
@@ -339,7 +345,18 @@ const PostCardLink = memo(function PostCardLink({ post }: { post: FeedPost }) {
         href={`/dashboard/post/${post.id}`}
         className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <Card className="min-h-44 transition-all hover:bg-muted/30 hover:shadow-md">
+        <Card className="min-h-44 overflow-hidden transition-all hover:bg-muted/30 hover:shadow-md">
+          {post.imageUrl ? (
+            <div className="relative h-44 w-full border-b bg-muted/40">
+              <Image
+                src={post.imageUrl}
+                alt={post.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 500px"
+                className="object-cover"
+              />
+            </div>
+          ) : null}
           <CardHeader>
             <CardTitle>{post.title}</CardTitle>
             <CardDescription className="line-clamp-2">
@@ -435,7 +452,7 @@ function AuthorRating({
 
   return (
     <span className="inline-flex items-center gap-1">
-      <Star className="size-3.5 fill-foreground text-foreground" />
+      <Star className="size-3.5 fill-amber-400 text-amber-500" />
       {formatRating(average)} from {count} {count === 1 ? "review" : "reviews"}
     </span>
   );

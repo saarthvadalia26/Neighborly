@@ -61,7 +61,7 @@ export function CreatePostFields({ pricingPosts }: CreatePostFieldsProps) {
           name="category"
           defaultValue="other"
           disabled={pending}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 dark:bg-card dark:text-foreground"
         >
           <option value="items">Items</option>
           <option value="services">Services</option>
@@ -179,7 +179,7 @@ function CreditValueGuide({
         </div>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-5">
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         {CREDIT_VALUE_GUIDE.map((item) => (
           <div
             key={item.value}
